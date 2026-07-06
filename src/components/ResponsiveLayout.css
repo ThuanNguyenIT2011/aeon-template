@@ -1,0 +1,117 @@
+/* ResponsiveLayout.css */
+
+/* Root variables for premium palette */
+:root {
+  --color-primary: #0d6efd; /* blue accent */
+  --color-primary-light: #e7f1ff;
+  --color-background: #f9fafb;
+  --color-surface: rgba(255, 255, 255, 0.8);
+  --color-surface-dark: rgba(0, 0, 0, 0.4);
+  --radius: 12px;
+  --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.37);
+}
+
+/* Desktop layout – keep existing sidebar */
+.desktop-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.desktop-layout .nav-sidebar {
+  width: 260px;
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-glass);
+  padding: 20px;
+}
+
+.desktop-layout .content-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* Mobile layout */
+.mobile-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.mobile-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 1000;
+}
+
+.mobile-nav .hamburger {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 24px;
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--color-surface);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: var(--shadow-glass);
+}
+
+.bottom-nav a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.mobile-layout .content-area {
+  flex: 1;
+  margin-top: 56px; /* offset header */
+  margin-bottom: 56px; /* offset bottom nav */
+  padding: 16px;
+  overflow-y: auto;
+}
+
+/* Transition animations */
+.modal-overlay {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Glassmorphism for dialogs */
+.modal-content {
+  background: var(--color-surface);
+  backdrop-filter: blur(15px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-glass);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .nav-sidebar {
+    display: none;
+  }
+}

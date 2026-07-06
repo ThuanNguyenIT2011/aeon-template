@@ -1,0 +1,245 @@
+Workbook sheets: [('Tong quan', '1'), ('Danh sach Bang', '2'), ('Chi tiet Field', '3'), ('Quan he', '4'), ('Van de can lam ro', '5')]
+
+--- Sheet: Tong quan ---
+B2:THIẾT KẾ DATABASE MỚI — APP CHẤM ĐIỂM / KIỂM TRA POP & VMD
+B5:Module, C5:Số bảng, D5:Bảng chính (Master), E5:Mục đích nghiệp vụ, F5:Vấn đề chính của app cũ đã fix trong thiết kế mới
+B6:Hệ thống / Dùng chung, C6:9, D6:NGUOI_DUNG, E6:Xác thực, phân quyền, danh mục quầy hàng/vai trò, menu, config module, F6:Gộp 37 roles + 5 cột phân quyền rời rạc (WORK) thành bảng join chuẩn hóa; tách Email/Role vào THONG_TIN_QUAY_HANG để xoá 30+ If-case hardcode
+B7:Trang chủ, C7:1, D7:DANH_MUC_MENU_TRANG_CHU, E7:Cấu hình menu điều hướng trang chủ, F7:Giữ nguyên pattern config-table (đã tốt ở bản cũ)
+B8:Công việc hàng ngày, C8:2, D8:DANH_MUC_CONG_VIEC, E8:Danh sách module công việc + phân quyền hiển thị theo ngành hàng, F8:Chuẩn hoá 5 cột 'Phân quyền 1-5' (có lỗi chính tả) thành 1 bảng join CONG_VIEC_PHAN_QUYEN nhiều dòng
+B9:POP, C9:4, D9:CHAM_DIEM_POP, E9:Chấm điểm & theo dõi lỗi trưng bày POP/POS theo quầy hàng, F9:Bỏ 35 If-case Role→Quầy hàng (dùng THONG_TIN_QUAY_HANG.VaiTroMacDinh); thêm cột Điểm vào danh mục lỗi; RemoveIf thay Remove+LookUp để cascade delete đúng
+B10:VMD, C10:6, D10:KIEM_TRA_VMD, CHAM_DIEM_VMD, E10:Kiểm tra & chấm điểm trưng bày Visual Merchandising theo 6 khu vực (VP/Bàn/Cột/Gondola/Sào/Vách), F10:Gộp 6 bảng khu vực trùng cấu trúc (Kiểm tra VP/Bàn/Cột/Gondola/Sào/Vách và 6 bảng lỗi tương ứng) thành 2 bảng chi tiết dùng cột Khu vực; gộp 'Thông tin quầy kids' vào THONG_TIN_QUAY_HANG_VMD
+B11:Mượn - Trả vật tư, C11:3, D11:PHIEU_MUON_TRA, E11:Quản lý phiếu mượn/trả vật tư trưng bày, ký nhận điện tử, F11:Thống nhất Tên đơn hàng dùng Lookup ở cả 2 form (thêm mới & chỉnh sửa) thay vì TextInput/Dropdown khác nhau
+B12:Quản lý trang trí, C12:1, D12:PHIEU_TRANG_TRI, E12:Quản lý phiếu bàn giao công tác trang trí (bản sao nghiệp vụ của Mượn-Trả), F12:Tách bảng riêng nhưng field/kiểu dữ liệu đồng bộ với PHIEU_MUON_TRA; xoá lệ thuộc DataSourceInfo() trỏ sai vào 'Ký nhận bàn giao'
+B13:Báo cáo, C13:2, D13:DANH_MUC_BAO_CAO, E13:Cấu hình module báo cáo POP/VMD + phân quyền xem báo cáo, F13:Chuẩn hoá cột phân quyền như module Công việc hàng ngày
+B16:Ghi chú:
+B17:- Tổng cộng 23 bảng (SharePoint List) trong thiết kế mới, giảm từ ~34 bảng vật lý ở app cũ (do gộp 12 bảng khu vực VMD trùng cấu trúc).
+B18:- Chi tiết field: xem sheet 'Chi tiet Field'. Danh sách bảng: xem sheet 'Danh sach Bang'. Quan hệ khóa ngoại: xem sheet 'Quan he'.
+B19:- Các điểm cần khách hàng xác nhận trước khi triển khai: xem sheet 'Van de can lam ro'.
+
+--- Sheet: Danh sach Bang ---
+A1:STT, B1:Tên bảng (mới), C1:Tên bảng / List gốc (SharePoint cũ), D1:Module, E1:Loại bảng, F1:Mô tả bảng, G1:Số field
+A2:1, B2:NGUOI_DUNG, C2:USER, D2:Hệ thống / Dùng chung, E2:Master, F2:Tài khoản người dùng, thông tin đăng nhập và phân quyền., G2:10
+A3:2, B3:DANH_MUC_VAI_TRO, C3:(mới - suy ra từ 37 roles hardcode), D3:Hệ thống / Dùng chung, E3:Danh mục, F3:Danh mục 37 vai trò công việc (GL Ladies, Staff SPA...) và nhóm quyền tương ứng., G3:4
+A4:3, B4:THONG_TIN_QUAY_HANG, C4:THÔNG TIN QUẦY HÀNG, D4:Hệ thống / Dùng chung, E4:Danh mục, F4:Danh mục Ngành hàng → Quầy hàng dùng chung cho POP, Mượn-Trả, Quản lý trang trí; mở rộng thêm Email & Vai trò mặc định., G4:6
+A5:4, B5:THONG_TIN_QUAY_HANG_VMD, C5:THÔNG TIN QUẦY HÀNG VMD + Thông tin quầy kids, D5:Hệ thống / Dùng chung, E5:Danh mục, F5:Danh mục Ngành hàng → Quầy hàng riêng cho VMD (chỉ Softline/Hardline + Kids), gộp bảng Kids riêng biệt của app cũ., G5:6
+A6:5, B6:DANH_MUC_MENU_TRANG_CHU, C6:HOME, D6:Trang chủ, E6:Danh mục, F6:Cấu hình các mục menu hiển thị trên màn hình Trang chủ., G6:5
+A7:6, B7:DANH_MUC_CONG_VIEC, C7:WORK, D7:Công việc hàng ngày, E7:Danh mục, F7:Danh mục các module công việc hàng ngày (Chấm điểm POP, Kiểm tra VMD, Mượn-Trả...)., G7:5
+A8:7, B8:CONG_VIEC_PHAN_QUYEN, C8:WORK.'Phân quyền 1-5' (5 cột), D8:Công việc hàng ngày, E8:Bảng liên kết (join), F8:Phân quyền hiển thị module công việc theo nhóm ngành hàng — thay thế 5 cột rời rạc bằng nhiều dòng dữ liệu., G8:3
+A9:8, B9:DANH_MUC_BAO_CAO, C9:Báo cáo POPVMD, D9:Báo cáo, E9:Danh mục, F9:Danh mục các module báo cáo (Báo cáo kiểm tra POP, chấm điểm POP, kiểm tra VMD...)., G9:4
+A10:9, B10:BAO_CAO_PHAN_QUYEN, C10:Báo cáo POPVMD.'Phân quyền 1-5', D10:Báo cáo, E10:Bảng liên kết (join), F10:Phân quyền xem từng module báo cáo theo nhóm ngành hàng., G10:3
+A11:10, B11:CHAM_DIEM_POP, C11:CHẤM ĐIỂM POP, D11:POP, E11:Master, F11:Phiên chấm điểm trưng bày POP/POS tại một quầy hàng, tại một thời điểm., G11:8
+A12:11, B12:LOI_TRUNG_BAY_POP, C12:LỖI TRƯNG BÀY POP, D12:POP, E12:Chi tiết (child), F12:Từng lỗi trưng bày cụ thể ghi nhận trong một phiên chấm điểm POP (1 phiên có N lỗi)., G12:12
+A13:12, B13:DANH_MUC_LOI_POP, C13:Thông tin lỗi POP, D13:POP, E13:Danh mục, F13:Danh mục loại lỗi vi phạm trưng bày POP kèm điểm phạt chuẩn., G13:3
+A14:13, B14:KIEM_TRA_TRUNG_BAY_POP, C14:KIỂM TRA POP / KIỂM TRA TRƯNG BÀY POP, D14:POP, E14:Master (cần xác nhận), F14:Dữ liệu kiểm tra POP dùng cho báo cáo & luồng supervisor — cần làm rõ quan hệ với CHAM_DIEM_POP/LOI_TRUNG_BAY_POP (xem sheet Van de can lam ro, mục 1)., G14:10
+A15:14, B15:KIEM_TRA_VMD, C15:KIỂM TRA VMD, D15:VMD, E15:Master, F15:Phiên kiểm tra trưng bày VMD tại một quầy hàng (không chấm điểm, chỉ ghi nhận Đạt/Không đạt)., G15:7
+A16:15, B16:KIEM_TRA_VMD_CHI_TIET, C16:Kiểm tra VP/Bàn/Cột/Gondola/Sào/Vách (6 bảng), D16:VMD, E16:Chi tiết (child, đã gộp), F16:Kết quả kiểm tra & lỗi theo từng khu vực trưng bày (VP/Bàn/Cột/Gondola/Sào/Vách) của một phiên kiểm tra VMD., G16:14
+A17:16, B17:DANH_MUC_LOI_KIEM_TRA_VMD, C17:Thông tin lỗi trưng bày của VP/Bàn/Cột/Gondola/Sào/Vách (6 bảng), D17:VMD, E17:Danh mục (đã gộp), F17:Danh mục tiêu chí/mô tả lỗi kiểm tra theo từng khu vực trưng bày VMD., G17:3
+A18:17, B18:CHAM_DIEM_VMD, C18:CHẤM ĐIỂM VMD, D18:VMD, E18:Master, F18:Phiên chấm điểm trưng bày VMD tại một quầy hàng (có tính điểm phạt)., G18:6
+A19:18, B19:CHAM_DIEM_VMD_CHI_TIET, C19:Lỗi trưng bày của VP/bàn/Cột/Gondola/Sào/Vách (6 bảng), D19:VMD, E19:Chi tiết (child, đã gộp), F19:Kết quả chấm điểm & lỗi theo từng khu vực trưng bày của một phiên chấm điểm VMD., G19:12
+A20:19, B20:DANH_MUC_LOI_CHAM_DIEM_VMD, C20:Thông tin lỗi VP/Bàn/Cột/Gondola/Sào/Vách (chấm điểm, 6 bảng), D20:VMD, E20:Danh mục (đã gộp), F20:Danh mục loại lỗi chấm điểm theo khu vực, kèm điểm phạt (khác nhau theo nhóm quầy hàng)., G20:5
+A21:20, B21:PHIEU_MUON_TRA, C21:Ký nhận bàn giao, D21:Mượn - Trả vật tư, E21:Master, F21:Phiếu mượn/trả vật tư trưng bày giữa các quầy hàng, có chữ ký điện tử., G21:16
+A22:21, B22:DANH_MUC_TEN_DON_HANG, C22:Thông tin đơn hàng, D22:Mượn - Trả vật tư, E22:Danh mục, F22:Danh mục tên hạng mục/đơn hàng dùng trong phiếu mượn trả., G22:2
+A23:22, B23:DANH_MUC_TRANG_THAI_MUON_TRA, C23:Nội dung mượn trả, D23:Mượn - Trả vật tư, E23:Danh mục, F23:Danh mục trạng thái dùng để lọc phiếu mượn trả / trang trí (Đang mượn, Đã trả, Hư hỏng, Thiếu)., G23:2
+A24:23, B24:PHIEU_TRANG_TRI, C24:Quản lý trang trí_1, D24:Quản lý trang trí, E24:Master, F24:Phiếu bàn giao công tác trang trí quầy hàng (cấu trúc tương tự Mượn-Trả)., G24:14
+
+--- Sheet: Chi tiet Field ---
+A1:STT, B1:Tên bảng, C1:Tên field, D1:Khóa, E1:Kiểu dữ liệu (SharePoint), F1:Bắt buộc, G1:Mô tả field, H1:Ghi chú / Đề xuất fix
+A2:1, B2:NGUOI_DUNG, C2:ID, D2:PK, E2:Số (Number), F2:Có, G2:Khóa chính, SharePoint ID tự sinh.
+A3:2, B3:NGUOI_DUNG, C3:Username, E3:Văn bản một dòng, F3:Có, G3:Tên đăng nhập dùng để xác thực (unique).
+A4:3, B4:NGUOI_DUNG, C4:Password, E4:Văn bản một dòng, F4:Có, G4:Mật khẩu., H4:Bảo mật yếu (plain text) ở app cũ — đề xuất chuyển sang Azure AD/Entra ID khi rebuild.
+A5:4, B5:NGUOI_DUNG, C5:HoTen, E5:Văn bản một dòng, F5:Có, G5:Họ tên hiển thị (Fullname).
+A6:5, B6:NGUOI_DUNG, C6:VaiTro, D6:FK → DANH_MUC_VAI_TRO, E6:Tra cứu (Lookup), F6:Có, G6:Vai trò công việc của user (VD: GL Ladies, Staff SPA...)., H6:- Lớp phân quyền data
+A7:6, B7:NGUOI_DUNG, C7:PhanQuyen, E7:Lựa chọn (Choice): SPA / Ngành hàng / Test, F7:Có, G7:Nhóm quyền cấp cao dùng để bật/tắt chức năng (Disabled/Edit) trên các màn hình.
+A8:7, B8:NGUOI_DUNG, C8:NhomNganhHang, E8:Lựa chọn (Choice): FOODLINE 1 / FOODLINE 2 / SOFTLINE / HARDLINE / SM / SPA, F8:Không, G8:Biến usernh cũ — nhóm ngành hàng cấp cao dùng filter module & báo cáo., H8:- Xem menu nào
+A9:8, B9:NGUOI_DUNG, C9:QuayHangMacDinh, D9:FK → THONG_TIN_QUAY_HANG, E9:Tra cứu (Lookup), F9:Không, G9:Quầy hàng mặc định của user., H9:Mới — thay thế 18-35 If-case hardcode Role→Quầy hàng trong code cũ.
+A10:9, B10:NGUOI_DUNG, C10:HinhAnh, E10:Hình ảnh, F10:Không, G10:Ảnh đại diện người dùng.
+A11:10, B11:NGUOI_DUNG, C11:TrangThai, E11:Có/Không (Yes/No), F11:Có, G11:Tài khoản còn hoạt động hay không., H11:Mới — phục vụ quản lý tài khoản, app cũ không có.
+A12:11, B12:DANH_MUC_VAI_TRO, C12:ID, D12:PK, E12:Số (Number), F12:Có, G12:Khóa chính.
+A13:12, B13:DANH_MUC_VAI_TRO, C13:TenVaiTro, E13:Văn bản một dòng, F13:Có, G13:Tên vai trò (VD: GL Ladies, Staff SPA, GL SPA...) — 37 giá trị ở app cũ, unique.
+A14:13, B14:DANH_MUC_VAI_TRO, C14:NhomVaiTro, E14:Lựa chọn (Choice): SPA / Food / Softline / Hardline / Group / Dev, F14:Có, G14:Nhóm lớn của vai trò dùng để phân loại quyền truy cập theo module (VMD chỉ áp dụng Softline/Hardline).
+A15:14, B15:DANH_MUC_VAI_TRO, C15:PhanQuyenMacDinh, E15:Lựa chọn (Choice): SPA / Ngành hàng / Test, F15:Không, G15:Permission mặc định gán cho vai trò này khi tạo user mới.
+A16:15, B16:THONG_TIN_QUAY_HANG, C16:ID, D16:PK, E16:Số (Number), F16:Có, G16:Khóa chính.
+A17:16, B17:THONG_TIN_QUAY_HANG, C17:NganhHang, E17:Văn bản một dòng / Lựa chọn, F17:Có, G17:Tên ngành hàng (VD: Ladies, Fish, Household 2F...).
+A18:17, B18:THONG_TIN_QUAY_HANG, C18:QuayHang, E18:Văn bản một dòng, F18:Có, G18:Tên quầy hàng cụ thể (unique) — dùng cho cascading dropdown Ngành hàng→Quầy hàng.
+A19:18, B19:THONG_TIN_QUAY_HANG, C19:VaiTroMacDinh, D19:FK → DANH_MUC_VAI_TRO, E19:Tra cứu (Lookup), F19:Không, G19:Vai trò tương ứng quầy hàng này., H19:Mới — thay thế 35 If-case mapping Role→Quầy hàng trong màn 'Chấm điểm POP'.
+A20:19, B20:THONG_TIN_QUAY_HANG, C20:Email, E20:Văn bản một dòng, F20:Không, G20:Email nhận thông báo khi có lỗi trưng bày mới., H20:Mới — thay thế 30 If-case hardcode email trong 'Gửi thông báo'. Cần xác nhận case Sport=Inner, Stationery=Multimedia có đúng nghiệp vụ hay là bug (xem Van de can lam ro).
+A21:20, B21:THONG_TIN_QUAY_HANG, C21:GhiChu, E21:Văn bản nhiều dòng, F21:Không, G21:Ghi chú thêm.
+A22:21, B22:THONG_TIN_QUAY_HANG_VMD, C22:ID, D22:PK, E22:Số (Number), F22:Có, G22:Khóa chính.
+A23:22, B23:THONG_TIN_QUAY_HANG_VMD, C23:NganhHang, E23:Văn bản một dòng, F23:Có, G23:Tên ngành hàng (chỉ Softline/Hardline).
+A24:23, B24:THONG_TIN_QUAY_HANG_VMD, C24:QuayHang, E24:Văn bản một dòng, F24:Có, G24:Tên quầy hàng cụ thể (unique).
+A25:24, B25:THONG_TIN_QUAY_HANG_VMD, C25:VaiTroMacDinh, D25:FK → DANH_MUC_VAI_TRO, E25:Tra cứu (Lookup), F25:Không, G25:Vai trò tương ứng quầy hàng này., H25:Thay thế 18 If-case hardcode Role→Quầy hàng trong màn VMD.
+A26:25, B26:THONG_TIN_QUAY_HANG_VMD, C26:Email, E26:Văn bản một dòng, F26:Không, G26:Email nhận thông báo lỗi VMD., H26:Mới — thay 17 If-case hardcode email.
+A27:26, F27:Có, G27:Phân biệt quầy hàng thường và quầy Kids., H27:Gộp bảng 'Thông tin quầy kids' riêng biệt (dành cho user '1004.dlkids') vào bảng này để tránh duplicate cấu trúc.
+A28:27, B28:THONG_TIN_QUAY_HANG_VMD, C28:GhiChu, E28:Văn bản nhiều dòng, F28:Không, G28:Ghi chú thêm.
+A29:28, B29:DANH_MUC_MENU_TRANG_CHU, C29:ID, D29:PK, E29:Số (Number), F29:Có, G29:Khóa chính.
+A30:29, B30:DANH_MUC_MENU_TRANG_CHU, C30:TenMenu, E30:Văn bản một dòng, F30:Có, G30:Tên mục menu hiển thị ở Trang chủ (Name Group).
+A31:30, B31:DANH_MUC_MENU_TRANG_CHU, C31:HinhAnh, E31:Hình ảnh, F31:Không, G31:Icon hiển thị trong gallery.
+A32:31, B32:DANH_MUC_MENU_TRANG_CHU, C32:ManHinhDich, E32:Văn bản một dòng, F32:Có, G32:Tên màn hình điều hướng đến khi chọn menu này., H32:Mới — làm rõ mục tiêu Navigate, tránh phải sửa code khi đổi luồng.
+A33:32, B33:DANH_MUC_MENU_TRANG_CHU, C33:ThuTu, E33:Số (Number), F33:Không, G33:Thứ tự hiển thị trong gallery.
+A34:33, B34:DANH_MUC_CONG_VIEC, C34:ID, D34:PK, E34:Số (Number), F34:Có, G34:Khóa chính.
+A35:34, B35:DANH_MUC_CONG_VIEC, C35:TenModule, E35:Văn bản một dòng, F35:Có, G35:Tên module công việc (VD: Chấm điểm POP, Kiểm tra VMD, Mượn-Trả vật tư...).
+A36:35, B36:DANH_MUC_CONG_VIEC, C36:HinhAnh, E36:Hình ảnh, F36:Không, G36:Icon hiển thị.
+A37:36, B37:DANH_MUC_CONG_VIEC, C37:ManHinhDich, E37:Văn bản một dòng, F37:Có, G37:Tên màn hình điều hướng đến.
+A38:37, B38:DANH_MUC_CONG_VIEC, C38:ThuTu, E38:Số (Number), F38:Không, G38:Thứ tự hiển thị.
+A39:38, B39:CONG_VIEC_PHAN_QUYEN, C39:ID, D39:PK, E39:Số (Number), F39:Có, G39:Khóa chính.
+A40:39, B40:CONG_VIEC_PHAN_QUYEN, C40:ModuleID, D40:FK → DANH_MUC_CONG_VIEC, E40:Tra cứu (Lookup), F40:Có, G40:Module công việc được cấp quyền xem.
+A41:40, B41:CONG_VIEC_PHAN_QUYEN, C41:NhomQuyen, E41:Lựa chọn (Choice): FOODLINE 1 / FOODLINE 2 / SOFTLINE / HARDLINE / SM / SPA, F41:Có, G41:Nhóm ngành hàng được phép nhìn thấy module này., H41:Thay thế 5 cột rời rạc 'Phân quyền 1-5' (có 1 cột bị lỗi chính tả 'Phần quyền 3') — mỗi quyền là 1 dòng, dễ mở rộng.
+A42:41, B42:DANH_MUC_BAO_CAO, C42:ID, D42:PK, E42:Số (Number), F42:Có, G42:Khóa chính.
+A43:42, B43:DANH_MUC_BAO_CAO, C43:TenModuleBaoCao, E43:Văn bản một dòng, F43:Có, G43:Tên module báo cáo (Báo cáo kiểm tra POP, Báo cáo chấm điểm POP, Báo cáo kiểm tra VMD...).
+A44:43, B44:DANH_MUC_BAO_CAO, C44:HinhAnh, E44:Hình ảnh, F44:Không, G44:Icon hiển thị.
+A45:44, B45:DANH_MUC_BAO_CAO, C45:ManHinhDich, E45:Văn bản một dòng, F45:Có, G45:Tên màn hình báo cáo điều hướng đến.
+A46:45, B46:BAO_CAO_PHAN_QUYEN, C46:ID, D46:PK, E46:Số (Number), F46:Có, G46:Khóa chính.
+A47:46, B47:BAO_CAO_PHAN_QUYEN, C47:BaoCaoID, D47:FK → DANH_MUC_BAO_CAO, E47:Tra cứu (Lookup), F47:Có, G47:Module báo cáo được cấp quyền xem.
+A48:47, B48:BAO_CAO_PHAN_QUYEN, C48:NhomQuyen, E48:Lựa chọn (Choice): FOODLINE 1 / FOODLINE 2 / SOFTLINE / HARDLINE / SM,SPA, F48:Có, G48:Nhóm ngành hàng được phép xem báo cáo này., H48:Thay thế 5 cột 'Phân quyền 1-5' của bảng 'Báo cáo POPVMD' cũ.
+A49:48, B49:CHAM_DIEM_POP, C49:ID, D49:PK, E49:Số (Number), F49:Có, G49:Khóa chính.
+A50:49, B50:CHAM_DIEM_POP, C50:NguoiDungID, D50:FK → NGUOI_DUNG, E50:Tra cứu (Lookup), F50:Không, G50:Người thực hiện chấm điểm., H50:Mới — thay vì chỉ lưu tên text 'Người kiểm tra', liên kết trực tiếp tới NGUOI_DUNG để truy vết & báo cáo chính xác.
+A51:50, B51:CHAM_DIEM_POP, C51:NguoiKiemTra, E51:Văn bản một dòng, F51:Có, G51:Tên người kiểm tra (auto-fill từ tài khoản đăng nhập).
+A52:51, B52:CHAM_DIEM_POP, C52:NganhHang, E52:Văn bản một dòng, F52:Có, G52:Ngành hàng của quầy được chấm điểm.
+A53:52, B53:CHAM_DIEM_POP, C53:QuayHang, D53:FK → THONG_TIN_QUAY_HANG, E53:Tra cứu (Lookup), F53:Có, G53:Quầy hàng được chấm điểm.
+A54:53, B54:CHAM_DIEM_POP, C54:KetQuaKiemTra, E54:Lựa chọn (Choice): Đạt / Không đạt, F54:Có, G54:Kết quả chấm điểm tổng quan của phiên.
+A55:54, B55:CHAM_DIEM_POP, C55:Thang, E55:Văn bản một dòng, F55:Không, G55:Tháng thực hiện, dạng 'Tháng 01'...'Tháng 12'., H55:Đề xuất bỏ, thay bằng công thức tính từ Created (app cũ dùng If-chain 12 case dư thừa để tạo giá trị này).
+A56:55, B56:CHAM_DIEM_POP, C56:Created, E56:Ngày và giờ (Date and Time), F56:Có, G56:Ngày giờ tạo phiên chấm điểm (tự sinh).
+A57:56, B57:LOI_TRUNG_BAY_POP, C57:ID, D57:PK, E57:Số (Number), F57:Có, G57:Khóa chính.
+A58:57, B58:LOI_TRUNG_BAY_POP, C58:RefID, D58:FK → CHAM_DIEM_POP, E58:Tra cứu (Lookup), F58:Có, G58:Phiên chấm điểm cha (quan hệ 1-N).
+A59:58, B59:LOI_TRUNG_BAY_POP, C59:LoiViPham, D59:FK → DANH_MUC_LOI_POP, E59:Tra cứu (Lookup), F59:Có, G59:Loại lỗi vi phạm trưng bày.
+A60:59, B60:LOI_TRUNG_BAY_POP, C60:Diem, E60:Số (Number), F60:Có, G60:Điểm phạt cho lỗi này., H60:Mới — auto-fill từ DANH_MUC_LOI_POP.Diem thay vì hardcode trong form (app cũ: điểm không được lưu, chỉ tính client-side).
+A61:60, B61:LOI_TRUNG_BAY_POP, C61:HinhAnhLoi, E61:Hình ảnh, F61:Có, G61:Ảnh chụp lỗi trước khi sửa.
+A62:61, B62:LOI_TRUNG_BAY_POP, C62:HinhAnhSuaLoi, E62:Hình ảnh, F62:Không, G62:Ảnh chụp sau khi GL ngành hàng đã sửa lỗi.
+A63:62, B63:LOI_TRUNG_BAY_POP, C63:GhiChu, E63:Văn bản nhiều dòng, F63:Không, G63:Ghi chú của người chấm điểm.
+A64:63, B64:LOI_TRUNG_BAY_POP, C64:PhanHoiThongTin, E64:Văn bản nhiều dòng, F64:Không, G64:Nội dung phản hồi của GL ngành hàng sau khi sửa lỗi.
+A65:64, B65:LOI_TRUNG_BAY_POP, C65:NganhHang, E65:Văn bản một dòng, F65:Không, G65:Sao chép từ CHAM_DIEM_POP để tăng tốc filter/báo cáo (denormalized).
+A66:65, B66:LOI_TRUNG_BAY_POP, C66:QuayHang, E66:Văn bản một dòng, F66:Không, G66:Sao chép từ CHAM_DIEM_POP để tăng tốc filter/báo cáo (denormalized).
+A67:66, B67:LOI_TRUNG_BAY_POP, C67:Thang, E67:Văn bản một dòng, F67:Không, G67:Sao chép từ CHAM_DIEM_POP.
+A68:67, B68:LOI_TRUNG_BAY_POP, C68:Created, E68:Ngày và giờ (Date and Time), F68:Có, G68:Ngày giờ ghi nhận lỗi (tự sinh).
+A69:68, B69:DANH_MUC_LOI_POP, C69:ID, D69:PK, E69:Số (Number), F69:Có, G69:Khóa chính.
+A70:69, B70:DANH_MUC_LOI_POP, C70:LoiViPham, E70:Văn bản một dòng, F70:Có, G70:Mô tả loại lỗi vi phạm trưng bày (unique), VD: 'POP/POS hết hạn'.
+A71:70, B71:DANH_MUC_LOI_POP, C71:Diem, E71:Số (Number), F71:Có, G71:Điểm phạt chuẩn tương ứng loại lỗi (VD: 5, 10, 20)., H71:Mới — app cũ không có cột này trong danh mục, điểm bị hardcode rải rác trong code màn hình.
+A72:71, B72:KIEM_TRA_TRUNG_BAY_POP, C72:ID, D72:PK, E72:Số (Number), F72:Có, G72:Khóa chính.
+A73:72, B73:KIEM_TRA_TRUNG_BAY_POP, C73:RefID, D73:FK → CHAM_DIEM_POP (cần xác nhận), E73:Tra cứu (Lookup), F73:Không, G73:Liên kết tới phiên chấm điểm POP., H73:Tài liệu gốc chưa xác định rõ đây là view/báo cáo của LOI_TRUNG_BAY_POP hay 1 luồng 'Kiểm tra POP' độc lập chưa phân tích đủ màn hình — xem Van de can lam ro #1.
+A74:73, B74:KIEM_TRA_TRUNG_BAY_POP, C74:NganhHang, E74:Lựa chọn (Choice), F74:Không, G74:Ngành hàng.
+A75:74, B75:KIEM_TRA_TRUNG_BAY_POP, C75:QuayHang, E75:Văn bản một dòng, F75:Không, G75:Quầy hàng.
+A76:75, B76:KIEM_TRA_TRUNG_BAY_POP, C76:KetQuaKiemTra, E76:Lựa chọn (Choice): Đạt / Không đạt, F76:Không, G76:Kết quả kiểm tra.
+A77:76, B77:KIEM_TRA_TRUNG_BAY_POP, C77:LoiTrungBay, E77:Văn bản một dòng, F77:Không, G77:Mô tả lỗi trưng bày (nếu có).
+A78:77, B78:KIEM_TRA_TRUNG_BAY_POP, C78:GhiChu, E78:Văn bản nhiều dòng, F78:Không, G78:Ghi chú.
+A79:78, B79:KIEM_TRA_TRUNG_BAY_POP, C79:PhanHoiThongTin, E79:Văn bản nhiều dòng, F79:Không, G79:Phản hồi xử lý.
+A80:79, B80:KIEM_TRA_TRUNG_BAY_POP, C80:Thang, E80:Văn bản một dòng, F80:Không, G80:Tháng ghi nhận.
+A81:80, B81:KIEM_TRA_TRUNG_BAY_POP, C81:Created, E81:Ngày và giờ (Date and Time), F81:Có, G81:Ngày giờ tạo (tự sinh).
+A82:81, B82:KIEM_TRA_VMD, C82:ID, D82:PK, E82:Số (Number), F82:Có, G82:Khóa chính.
+A83:82, B83:KIEM_TRA_VMD, C83:NguoiDungID, D83:FK → NGUOI_DUNG, E83:Tra cứu (Lookup), F83:Không, G83:Người thực hiện kiểm tra., H83:Mới, thay cho lưu Mã người dùng dạng Number rời rạc.
+A84:83, B84:KIEM_TRA_VMD, C84:NguoiKiemTra, E84:Văn bản một dòng, F84:Có, G84:Tên người kiểm tra (auto-fill).
+A85:84, B85:KIEM_TRA_VMD, C85:NganhHang, D85:FK → THONG_TIN_QUAY_HANG_VMD, E85:Tra cứu (Lookup), F85:Có, G85:Ngành hàng (auto theo user, trừ DL Kids có thể tự chọn).
+A86:85, B86:KIEM_TRA_VMD, C86:QuayHang, D86:FK → THONG_TIN_QUAY_HANG_VMD, E86:Tra cứu (Lookup), F86:Có, G86:Quầy hàng được kiểm tra.
+A87:86, B87:KIEM_TRA_VMD, C87:Thang, E87:Văn bản một dòng, F87:Không, G87:Tháng thực hiện., H87:Đề xuất bỏ, tính từ Created.
+A88:87, B88:KIEM_TRA_VMD, C88:Created, E88:Ngày và giờ (Date and Time), F88:Có, G88:Ngày giờ tạo phiên kiểm tra (tự sinh).
+A89:88, B89:KIEM_TRA_VMD_CHI_TIET, C89:ID, D89:PK, E89:Số (Number), F89:Có, G89:Khóa chính.
+A90:89, B90:KIEM_TRA_VMD_CHI_TIET, C90:RefID, D90:FK → KIEM_TRA_VMD, E90:Tra cứu (Lookup), F90:Có, G90:Phiên kiểm tra VMD cha (1 phiên có tối đa 6 dòng, mỗi dòng 1 khu vực).
+A91:90, B91:KIEM_TRA_VMD_CHI_TIET, C91:KhuVuc, E91:Lựa chọn (Choice): VP / Bàn / Cột / Gondola / Sào / Vách, F91:Có, G91:Khu vực trưng bày được kiểm tra., H91:Mới — gộp 6 SharePoint List trùng cấu trúc (Kiểm tra VP/Bàn/Cột/Gondola/Sào/Vách) của app cũ thành 1 bảng dùng cột phân loại này, giảm 6 bảng còn 1.
+A92:91, B92:KIEM_TRA_VMD_CHI_TIET, C92:KetQua, D92:FK → DANH_MUC_LOI_KIEM_TRA_VMD, E92:Tra cứu (Lookup), F92:Có, G92:Mô tả kết quả/lỗi khu vực (lấy từ danh mục lỗi theo Khu vực).
+A93:92, B93:KIEM_TRA_VMD_CHI_TIET, C93:TenNguoiKiemTra, E93:Văn bản một dòng, F93:Không, G93:Tên người kiểm tra khu vực (Inspector).
+A94:93, B94:KIEM_TRA_VMD_CHI_TIET, C94:HinhAnh, E94:Hình ảnh, F94:Không, G94:Ảnh chụp lỗi ban đầu.
+A95:94, B95:KIEM_TRA_VMD_CHI_TIET, C95:HinhSuaLoi, E95:Hình ảnh, F95:Không, G95:Ảnh sau khi Counter Manager sửa lỗi (feedback loop).
+A96:95, B96:KIEM_TRA_VMD_CHI_TIET, C96:TenNguoiPhanHoi, E96:Văn bản một dòng, F96:Không, G96:Tên người phản hồi/sửa lỗi.
+A97:96, B97:KIEM_TRA_VMD_CHI_TIET, C97:PhanHoiThongTin, E97:Văn bản nhiều dòng, F97:Không, G97:Nội dung phản hồi xử lý lỗi.
+A98:97, B98:KIEM_TRA_VMD_CHI_TIET, C98:GhiChu, E98:Văn bản nhiều dòng, F98:Không, G98:Ghi chú của người kiểm tra.
+A99:98, B99:KIEM_TRA_VMD_CHI_TIET, C99:NganhHang, E99:Văn bản một dòng, F99:Không, G99:Sao chép từ KIEM_TRA_VMD (denormalized, phục vụ filter nhanh).
+A100:99, B100:KIEM_TRA_VMD_CHI_TIET, C100:QuayHang, E100:Văn bản một dòng, F100:Không, G100:Sao chép từ KIEM_TRA_VMD (denormalized).
+A101:100, B101:KIEM_TRA_VMD_CHI_TIET, C101:Thang, E101:Văn bản một dòng, F101:Không, G101:Sao chép từ KIEM_TRA_VMD.
+A102:101, B102:KIEM_TRA_VMD_CHI_TIET, C102:Created, E102:Ngày và giờ (Date and Time), F102:Có, G102:Ngày giờ ghi nhận (tự sinh).
+A103:102, B103:DANH_MUC_LOI_KIEM_TRA_VMD, C103:ID, D103:PK, E103:Số (Number), F103:Có, G103:Khóa chính.
+A104:103, B104:DANH_MUC_LOI_KIEM_TRA_VMD, C104:KhuVuc, E104:Lựa chọn (Choice): VP / Bàn / Cột / Gondola / Sào / Vách, F104:Có, G104:Khu vực trưng bày áp dụng.
+A105:104, B105:DANH_MUC_LOI_KIEM_TRA_VMD, C105:MoTaLoi, E105:Văn bản một dòng, F105:Có, G105:Mô tả tiêu chí/loại lỗi kiểm tra cho khu vực tương ứng., H105:Mới — gộp 6 danh mục 'Thông tin lỗi trưng bày của [Khu vực]' thành 1 bảng.
+A106:105, B106:CHAM_DIEM_VMD, C106:ID, D106:PK, E106:Số (Number), F106:Có, G106:Khóa chính.
+A107:106, B107:CHAM_DIEM_VMD, C107:NguoiDungID, D107:FK → NGUOI_DUNG, E107:Tra cứu (Lookup), F107:Không, G107:Người thực hiện chấm điểm.
+A108:107, B108:CHAM_DIEM_VMD, C108:NguoiKiemTra, E108:Văn bản một dòng, F108:Có, G108:Tên người kiểm tra (auto-fill).
+A109:108, B109:CHAM_DIEM_VMD, C109:NganhHang, D109:FK → THONG_TIN_QUAY_HANG_VMD, E109:Tra cứu (Lookup), F109:Có, G109:Ngành hàng.
+A110:109, B110:CHAM_DIEM_VMD, C110:QuayHang, D110:FK → THONG_TIN_QUAY_HANG_VMD, E110:Tra cứu (Lookup), F110:Có, G110:Quầy hàng được chấm điểm.
+A111:110, B111:CHAM_DIEM_VMD, C111:Created, E111:Ngày và giờ (Date and Time), F111:Có, G111:Ngày giờ tạo phiên (tự sinh)., H111:App cũ lưu 6 cột 'Khu vực kiểm tra [Zone]' (Đạt/Không đạt) trực tiếp trên bảng này — đề xuất chuyển toàn bộ sang CHAM_DIEM_VMD_CHI_TIET để nhất quán & dễ mở rộng thêm khu vực mới.
+A112:111, B112:CHAM_DIEM_VMD_CHI_TIET, C112:ID, D112:PK, E112:Số (Number), F112:Có, G112:Khóa chính.
+A113:112, B113:CHAM_DIEM_VMD_CHI_TIET, C113:RefID, D113:FK → CHAM_DIEM_VMD, E113:Tra cứu (Lookup), F113:Có, G113:Phiên chấm điểm VMD cha (1 phiên tối đa 6 dòng).
+A114:113, B114:CHAM_DIEM_VMD_CHI_TIET, C114:KhuVuc, E114:Lựa chọn (Choice): VP / Bàn / Cột / Gondola / Sào / Vách, F114:Có, G114:Khu vực trưng bày được chấm điểm., H114:Mới — gộp 6 bảng kết quả (radio Đạt/Không đạt trên master) + 6 bảng lỗi khu vực ('Lỗi trưng bày của VP/bàn/Cột/Gondola/Sào/Vách') của app cũ thành 1 bảng.
+A115:114, B115:CHAM_DIEM_VMD_CHI_TIET, C115:KetQua, E115:Lựa chọn (Choice): Đạt / Không đạt, F115:Có, G115:Kết quả chấm điểm khu vực.
+A116:115, B116:CHAM_DIEM_VMD_CHI_TIET, C116:LoiTrungBay, D116:FK → DANH_MUC_LOI_CHAM_DIEM_VMD, E116:Tra cứu (Lookup), F116:Không, G116:Loại lỗi (bắt buộc nếu Kết quả = Không đạt).
+A117:116, B117:CHAM_DIEM_VMD_CHI_TIET, C117:Diem, E117:Số (Number), F117:Không, G117:Điểm phạt cho lỗi này., H117:Auto-fill theo LoiTrungBay + Quầy hàng; giữ nguyên business rule chống trùng (mỗi loại lỗi chỉ tính điểm 1 lần/phiên).
+A118:117, B118:CHAM_DIEM_VMD_CHI_TIET, C118:HinhAnh, E118:Hình ảnh, F118:Không, G118:Ảnh chụp lỗi khu vực.
+A119:118, B119:CHAM_DIEM_VMD_CHI_TIET, C119:GhiChu, E119:Văn bản nhiều dòng, F119:Không, G119:Ghi chú.
+A120:119, B120:CHAM_DIEM_VMD_CHI_TIET, C120:NganhHang, E120:Văn bản một dòng, F120:Không, G120:Sao chép từ CHAM_DIEM_VMD (denormalized).
+A121:120, B121:CHAM_DIEM_VMD_CHI_TIET, C121:QuayHang, E121:Văn bản một dòng, F121:Không, G121:Sao chép từ CHAM_DIEM_VMD (denormalized).
+A122:121, B122:CHAM_DIEM_VMD_CHI_TIET, C122:Thang, E122:Văn bản một dòng, F122:Không, G122:Sao chép từ CHAM_DIEM_VMD.
+A123:122, B123:CHAM_DIEM_VMD_CHI_TIET, C123:Created, E123:Ngày và giờ (Date and Time), F123:Có, G123:Ngày giờ ghi nhận (tự sinh).
+A124:123, B124:DANH_MUC_LOI_CHAM_DIEM_VMD, C124:ID, D124:PK, E124:Số (Number), F124:Có, G124:Khóa chính.
+A125:124, B125:DANH_MUC_LOI_CHAM_DIEM_VMD, C125:KhuVuc, E125:Lựa chọn (Choice): VP / Bàn / Cột / Gondola / Sào / Vách, F125:Có, G125:Khu vực trưng bày áp dụng.
+A126:125, B126:DANH_MUC_LOI_CHAM_DIEM_VMD, C126:MoTaLoi, E126:Văn bản một dòng, F126:Có, G126:Mô tả loại lỗi (VD: 'Bục MNC, Rác/bụi, MNC sai/vỡ...').
+A127:126, B127:DANH_MUC_LOI_CHAM_DIEM_VMD, C127:NhomQuayHang, E127:Lựa chọn (Choice): Fashion / SBA / Tất cả, F127:Không, G127:Nhóm quầy hàng áp dụng mức điểm này (điểm phạt khác nhau theo nhóm quầy)., H127:VD: nhóm Fashion (Ladies/Men/Inner/Sport/Kid Fashion/Kid Baby) = 5-7đ; nhóm SBA (SBA/Kid SBA/Kid Toy) = 6-8đ cho cùng loại lỗi.
+A128:127, B128:DANH_MUC_LOI_CHAM_DIEM_VMD, C128:Diem, E128:Số (Number), F128:Có, G128:Điểm phạt tương ứng.
+A129:128, B129:PHIEU_MUON_TRA, C129:ID, D129:PK, E129:Số (Number), F129:Có, G129:Khóa chính.
+A130:129, B130:PHIEU_MUON_TRA, C130:NguoiDungID, D130:FK → NGUOI_DUNG, E130:Tra cứu (Lookup), F130:Không, G130:Người tạo phiếu., H130:Mới.
+A131:130, B131:PHIEU_MUON_TRA, C131:NganhHang, D131:FK → THONG_TIN_QUAY_HANG, E131:Tra cứu (Lookup), F131:Có, G131:Ngành hàng.
+A132:131, B132:PHIEU_MUON_TRA, C132:QuayHang, D132:FK → THONG_TIN_QUAY_HANG, E132:Tra cứu (Lookup), F132:Có, G132:Quầy hàng mượn/trả vật tư.
+A133:132, B133:PHIEU_MUON_TRA, C133:TenDonHang, D133:FK → DANH_MUC_TEN_DON_HANG, E133:Tra cứu (Lookup), F133:Có, G133:Tên hạng mục mượn/trả., H133:App cũ: màn Thêm mới cho nhập tự do (TextInput), màn Chỉnh sửa chọn từ danh mục (Dropdown) — đề xuất thống nhất dùng Lookup ở cả 2 màn.
+A134:133, B134:PHIEU_MUON_TRA, C134:SoLuong, E134:Số (Number), F134:Không, G134:Số lượng vật tư mượn/trả.
+A135:134, B135:PHIEU_MUON_TRA, C135:HinhAnh, E135:Hình ảnh, F135:Không, G135:Ảnh hạng mục lúc bàn giao.
+A136:135, B136:PHIEU_MUON_TRA, C136:GhiChu, E136:Văn bản nhiều dòng, F136:Không, G136:Ghi chú.
+A137:136, B137:PHIEU_MUON_TRA, C137:TenNguoiBanGiao, E137:Văn bản một dòng, F137:Có, G137:Tên người bàn giao (auto-fill từ tài khoản đăng nhập).
+A138:137, B138:PHIEU_MUON_TRA, C138:TenNguoiNhan, E138:Văn bản một dòng, F138:Có, G138:Tên người nhận vật tư.
+A139:138, B139:PHIEU_MUON_TRA, C139:KyTen, E139:Hình ảnh, F139:Không, G139:Chữ ký điện tử (PenInput) của người bàn giao.
+A140:139, B140:PHIEU_MUON_TRA, C140:HinhSauKhiTra, E140:Hình ảnh, F140:Không, G140:Ảnh chụp vật tư khi trả lại.
+A141:140, B141:PHIEU_MUON_TRA, C141:NgayTra, E141:Ngày và giờ (Date and Time), F141:Không, G141:Ngày giờ trả vật tư (kết hợp DatePicker + giờ + phút).
+A142:141, B142:PHIEU_MUON_TRA, C142:TrangThai, E142:Lựa chọn (Choice): Đang mượn / Đã trả / Hư hỏng / Thiếu, F142:Không, G142:Trạng thái phiếu, điền khi trả.
+A143:142, B143:PHIEU_MUON_TRA, C143:LyDo, E143:Văn bản nhiều dòng, F143:Không, G143:Lý do không trả/trả trễ/hư hỏng.
+A144:143, B144:PHIEU_MUON_TRA, C144:Created, E144:Ngày và giờ (Date and Time), F144:Có, G144:Ngày giờ tạo phiếu (tự sinh).
+A145:144, B145:DANH_MUC_TEN_DON_HANG, C145:ID, D145:PK, E145:Số (Number), F145:Có, G145:Khóa chính.
+A146:145, B146:DANH_MUC_TEN_DON_HANG, C146:TenDonHang, E146:Văn bản một dòng, F146:Có, G146:Tên hạng mục/đơn hàng (unique).
+A147:146, B147:DANH_MUC_TRANG_THAI_MUON_TRA, C147:ID, D147:PK, E147:Số (Number), F147:Có, G147:Khóa chính.
+A148:147, B148:DANH_MUC_TRANG_THAI_MUON_TRA, C148:TenTrangThai, E148:Văn bản một dòng, F148:Có, G148:Tên trạng thái dùng cho dropdown lọc danh sách (unique).
+A149:148, B149:PHIEU_TRANG_TRI, C149:ID, D149:PK, E149:Số (Number), F149:Có, G149:Khóa chính.
+A150:149, B150:PHIEU_TRANG_TRI, C150:NguoiDungID, D150:FK → NGUOI_DUNG, E150:Tra cứu (Lookup), F150:Không, G150:Người tạo phiếu., H150:Mới.
+A151:150, B151:PHIEU_TRANG_TRI, C151:NganhHang, D151:FK → THONG_TIN_QUAY_HANG, E151:Tra cứu (Lookup), F151:Có, G151:Ngành hàng.
+A152:151, B152:PHIEU_TRANG_TRI, C152:QuayHang, D152:FK → THONG_TIN_QUAY_HANG, E152:Tra cứu (Lookup), F152:Có, G152:Quầy hàng thực hiện trang trí.
+A153:152, B153:PHIEU_TRANG_TRI, C153:LoaiCongViec, E153:Lựa chọn (Choice): Bàn giao ngành hàng / Thi công, F153:Có, G153:Loại công việc trang trí (tên field gốc 'Tên đơn hàng').
+A154:153, B154:PHIEU_TRANG_TRI, C154:HinhAnh, E154:Hình ảnh, F154:Không, G154:Ảnh hiện trạng lúc bàn giao.
+A155:154, B155:PHIEU_TRANG_TRI, C155:GhiChu, E155:Văn bản nhiều dòng, F155:Không, G155:Ghi chú.
+A156:155, B156:PHIEU_TRANG_TRI, C156:TenNguoiBanGiao, E156:Văn bản một dòng, F156:Có, G156:Tên người bàn giao (auto-fill).
+A157:156, B157:PHIEU_TRANG_TRI, C157:TenNguoiNhan, E157:Văn bản một dòng, F157:Có, G157:Tên người nhận.
+A158:157, B158:PHIEU_TRANG_TRI, C158:KyTen, E158:Hình ảnh, F158:Không, G158:Chữ ký điện tử của người bàn giao.
+A159:158, B159:PHIEU_TRANG_TRI, C159:HinhTrungBay, E159:Hình ảnh, F159:Không, G159:Ảnh kết quả trưng bày sau khi hoàn thành.
+A160:159, B160:PHIEU_TRANG_TRI, C160:TrangThai, E160:Lựa chọn (Choice): Đang mượn / Đã trả / Hư hỏng / Thiếu, F160:Không, G160:Trạng thái phiếu., H160:App cũ tái sử dụng cùng danh mục trạng thái với Mượn-Trả — cần xác nhận đúng nghiệp vụ (xem Van de can lam ro #6).
+A161:160, B161:PHIEU_TRANG_TRI, C161:LyDo, E161:Văn bản nhiều dòng, F161:Không, G161:Lý do (nếu có).
+A162:161, B162:PHIEU_TRANG_TRI, C162:Created, E162:Ngày và giờ (Date and Time), F162:Có, G162:Ngày giờ tạo phiếu (tự sinh).
+
+--- Sheet: Quan he ---
+A1:Bảng (N / con), B1:Field khóa ngoại, C1:Bảng tham chiếu (1 / cha), D1:Loại quan hệ, E1:Ghi chú
+A2:NGUOI_DUNG, B2:VaiTro, C2:DANH_MUC_VAI_TRO, D2:N-1
+A3:NGUOI_DUNG, B3:QuayHangMacDinh, C3:THONG_TIN_QUAY_HANG, D3:N-1, E3:Tùy chọn
+A4:THONG_TIN_QUAY_HANG, B4:VaiTroMacDinh, C4:DANH_MUC_VAI_TRO, D4:N-1
+A5:THONG_TIN_QUAY_HANG_VMD, B5:VaiTroMacDinh, C5:DANH_MUC_VAI_TRO, D5:N-1
+A6:CONG_VIEC_PHAN_QUYEN, B6:ModuleID, C6:DANH_MUC_CONG_VIEC, D6:N-1, E6:Chuẩn hóa 5 cột Phân quyền 1-5 cũ
+A7:BAO_CAO_PHAN_QUYEN, B7:BaoCaoID, C7:DANH_MUC_BAO_CAO, D7:N-1, E7:Chuẩn hóa 5 cột Phân quyền 1-5 cũ
+A8:CHAM_DIEM_POP, B8:QuayHang, C8:THONG_TIN_QUAY_HANG, D8:N-1
+A9:CHAM_DIEM_POP, B9:NguoiDungID, C9:NGUOI_DUNG, D9:N-1
+A10:LOI_TRUNG_BAY_POP, B10:RefID, C10:CHAM_DIEM_POP, D10:N-1 (1 phiên - N lỗi), E10:Cascade delete: xóa CHAM_DIEM_POP phải RemoveIf toàn bộ LOI_TRUNG_BAY_POP liên quan (bug ở app cũ chỉ xóa 1 dòng)
+A11:LOI_TRUNG_BAY_POP, B11:LoiViPham, C11:DANH_MUC_LOI_POP, D11:N-1
+A12:KIEM_TRA_VMD, B12:QuayHang, C12:THONG_TIN_QUAY_HANG_VMD, D12:N-1
+A13:KIEM_TRA_VMD, B13:NguoiDungID, C13:NGUOI_DUNG, D13:N-1
+A14:KIEM_TRA_VMD_CHI_TIET, B14:RefID, C14:KIEM_TRA_VMD, D14:N-1 (1 phiên - tối đa 6 khu vực), E14:Cascade delete RemoveIf khi xóa phiên kiểm tra cha
+A15:KIEM_TRA_VMD_CHI_TIET, B15:KetQua, C15:DANH_MUC_LOI_KIEM_TRA_VMD, D15:N-1, E15:Lọc theo KhuVuc tương ứng
+A16:CHAM_DIEM_VMD, B16:QuayHang, C16:THONG_TIN_QUAY_HANG_VMD, D16:N-1
+A17:CHAM_DIEM_VMD, B17:NguoiDungID, C17:NGUOI_DUNG, D17:N-1
+A18:CHAM_DIEM_VMD_CHI_TIET, B18:RefID, C18:CHAM_DIEM_VMD, D18:N-1 (1 phiên - tối đa 6 khu vực), E18:Cascade delete RemoveIf khi xóa phiên chấm điểm cha
+A19:CHAM_DIEM_VMD_CHI_TIET, B19:LoiTrungBay, C19:DANH_MUC_LOI_CHAM_DIEM_VMD, D19:N-1, E19:Lọc theo KhuVuc + NhomQuayHang tương ứng
+A20:PHIEU_MUON_TRA, B20:QuayHang, C20:THONG_TIN_QUAY_HANG, D20:N-1
+A21:PHIEU_MUON_TRA, B21:TenDonHang, C21:DANH_MUC_TEN_DON_HANG, D21:N-1
+A22:PHIEU_MUON_TRA, B22:NguoiDungID, C22:NGUOI_DUNG, D22:N-1
+A23:PHIEU_TRANG_TRI, B23:QuayHang, C23:THONG_TIN_QUAY_HANG, D23:N-1
+A24:PHIEU_TRANG_TRI, B24:NguoiDungID, C24:NGUOI_DUNG, D24:N-1
+
+--- Sheet: Van de can lam ro ---
+A1:#, B1:Vấn đề / Câu hỏi cần khách hàng xác nhận, C1:Ảnh hưởng đến bảng nào
+A2:1, B2:Bảng 'KIỂM TRA TRƯNG BÀY POP' dùng trong màn hình Báo cáo kiểm tra POP có phải cùng dữ liệu với LỖI TRƯNG BÀY POP, hay là một luồng nghiệp vụ 'Kiểm tra POP' hoàn toàn riêng (chưa có màn hình được phân tích/upload)? Cần bổ sung YAML/JSON các màn hình liên quan nếu có., C2:KIEM_TRA_TRUNG_BAY_POP
+A3:2, B3:Có giữ mật khẩu trong bảng người dùng (Password dạng văn bản) hay chuyển sang xác thực Azure AD / Microsoft Entra ID khi rebuild? Quyết định này ảnh hưởng lớn tới thiết kế bảng NGUOI_DUNG và cơ chế đăng nhập., C3:NGUOI_DUNG
+A4:3, B4:Trường 'Tháng' (dạng text 'Tháng 01'...'Tháng 12') xuất hiện lặp lại ở nhiều bảng dữ liệu — có cần giữ lại để tương thích báo cáo cũ, hay bỏ hẳn và tính trực tiếp từ Created bằng công thức/view?, C4:CHAM_DIEM_POP, LOI_TRUNG_BAY_POP, KIEM_TRA_VMD, KIEM_TRA_VMD_CHI_TIET, CHAM_DIEM_VMD, CHAM_DIEM_VMD_CHI_TIET
+A5:4, B5:Email thông báo: Sport dùng chung email với Inner, Stationery dùng chung email với Multimedia ở app cũ — đây là chủ ý nghiệp vụ hay là lỗi cấu hình cần sửa khi thiết lập THONG_TIN_QUAY_HANG.Email?, C5:THONG_TIN_QUAY_HANG, THONG_TIN_QUAY_HANG_VMD
+A6:5, B6:Cơ chế xóa liên quan (cascade delete) giữa bảng cha/con: nên tiếp tục dùng RemoveIf trong Power Apps, hay chuyển sang Power Automate Flow / trigger ở tầng Dataverse để đảm bảo toàn vẹn dữ liệu khi khối lượng lớn?, C6:LOI_TRUNG_BAY_POP, KIEM_TRA_VMD_CHI_TIET, CHAM_DIEM_VMD_CHI_TIET
+A7:6, B7:Danh mục trạng thái 'Đang mượn / Đã trả / Hư hỏng / Thiếu' của Mượn-Trả vật tư có áp dụng đúng cho Quản lý trang trí, hay module này cần một danh mục trạng thái riêng phù hợp nghiệp vụ thi công/trang trí hơn?, C7:PHIEU_TRANG_TRI, DANH_MUC_TRANG_THAI_MUON_TRA
+A8:7, B8:Danh sách đầy đủ 37 vai trò (Role) và mapping Role → Quầy hàng → Email hiện chỉ thấy một phần trong tài liệu gốc (một số bảng bị lược bớt '•••'). Đề nghị khách hàng cung cấp danh sách đầy đủ để nhập liệu chính xác cho DANH_MUC_VAI_TRO và THONG_TIN_QUAY_HANG., C8:DANH_MUC_VAI_TRO, THONG_TIN_QUAY_HANG, THONG_TIN_QUAY_HANG_VMD
+A9:8, B9:Khối lượng dữ liệu dự kiến (số phiên chấm điểm/kiểm tra mỗi tháng, số năm lưu trữ) — nếu vượt ngưỡng ~5.000-2.000.000 dòng/list hoặc cần filter phức tạp không delegable, nên cân nhắc Dataverse thay vì SharePoint Online để tránh giới hạn hiệu năng., C9:Toàn bộ các bảng giao dịch (CHAM_DIEM_POP, LOI_TRUNG_BAY_POP, KIEM_TRA_VMD*, CHAM_DIEM_VMD*, PHIEU_MUON_TRA, PHIEU_TRANG_TRI)
+A10:9, B10:Trường 'Điểm của [Khu vực]' hiển thị dấu trừ ở app cũ chỉ là format hiển thị (không phải giá trị lưu thực). Khi rebuild, có cần lưu giá trị âm thực sự trong Diem hay vẫn lưu dương và xử lý hiển thị ở tầng UI?, C10:CHAM_DIEM_VMD_CHI_TIET, LOI_TRUNG_BAY_POP

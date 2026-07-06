@@ -1,0 +1,93 @@
+/* Pagination.css */
+
+.table-pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-card-bg);
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+}
+
+.pagination-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-select {
+  padding: 4px 28px 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-white);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 18px;
+  min-width: 55px;
+  text-align: left;
+}
+
+.pagination-select:hover {
+  border-color: var(--color-primary);
+}
+
+.page-num-select {
+  min-width: 55px;
+  padding: 4px 28px 4px 12px;
+}
+
+.page-size-select {
+  min-width: 60px;
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary-light-border);
+}
+
+.pagination-btn:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.pagination-label {
+  color: var(--color-text-muted);
+  margin-right: 4px;
+}
+
+.pagination-total {
+  color: var(--color-text-muted);
+  margin-left: 4px;
+  margin-right: 4px;
+}

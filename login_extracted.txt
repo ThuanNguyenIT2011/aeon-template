@@ -1,0 +1,3660 @@
+Phân tích màn hình Login2
+PHÂN TÍCH MÀN HÌNH TRANG CHỦ4
+PHÂN TÍCH MÀN HÌNH CÔNG VIỆC HÀNG NGÀY6
+PHÂN TÍCH MÀN HÌNH CHẤM ĐIỂM POP8
+PHÂN TÍCH MÀN HÌNH CHẤM ĐIỂM POP THÊM MỚI12
+Phân tích màn hình Chấm điểm POP chi tiết15
+Phân tích màn hình Chấm điểm POP chỉnh sửa17
+Phân tích màn hình Lỗi POP19
+Phân tích màn hình Lỗi POP chi tiết21
+PHÂN TÍCH MÀN HÌNH LỖI POP CHỈNH SỬA23
+Phân tích màn hình Kiểm tra VMD25
+Phân tích màn hình Kiểm tra VMD Thêm mới27
+Phân tích Screen: "Kiểm tra VMD chi tiết"29
+Phân tích Screen: "Chấm điểm VMD"31
+Phân tích Screen: "Chấm điểm VMD Thêm mới"33
+Phân tích Screen: "Chấm điểm VMD Chỉnh sửa"35
+Phân tích màn hình Login
+DATA SOURCE — SharePoint List: USER
+Column
+Type
+Ghi chú
+Username
+Text
+Dùng để lookup
+Password
+Text
+Plain text — bảo mật yếu
+Role
+Text
+37 roles cứng
+Fullname
+Text
+Permission
+Text/Choice
+ID
+Number
+SharePoint ID
+Hình ảnh
+Image/Attachment
+Ngành hàng
+Text/Choice
+GLOBAL VARIABLES set sau login
+userrolevalue, usern, permission, userid, userimg, usernh, user
+VẤN ĐỀ CODE CŨ (cần fix khi rebuild)
+1. N+1 LookUp — gọi SharePoint 7 lần cùng 1 Username:
+// Cũ: 7 lần LookUp
+Set(userrolevalue, LookUp(USER, Username = ...).Role)
+Set(usern, LookUp(USER, Username = ...).Fullname)
+// ...
+// Mới: 1 lần, dùng With()
+With(
+    {_u: LookUp(USER, Username = txtUsername.Text And Password = txtPassword.Text)},
+    If(IsBlankOrError(_u),
+        Notify("Sai tài khoản hoặc mật khẩu"),
+        Set(userrolevalue, _u.Role);
+        Set(usern, _u.Fullname);
+        Set(permission, _u.Permission);
+        Set(userid, _u.ID);
+        Set(userimg, _u.'Hình ảnh');
+        Set(usernh, _u.'Ngành hàng');
+        Set(user, _u.Username);
+        Navigate('Trang Chủ', ScreenTransition.Cover)
+    )
+)
+2. Switch 37 cases — tất cả đều Navigate cùng 1 màn hình
+ bỏ hoàn toàn, dùng Navigate thẳng sau khi xác thực.
+3. Password plain text
+ Cần cân nhắc dùng Azure AD / Entra ID thay vì tự quản lý bảng USER.
+4. Show/hide password dùng
+ pattern này hoạt động nhưng hacky, rebuild nên dùng toggle variable.
+ROLES — phân nhóm
+Nhóm
+Roles
+SPA
+GL SPA, Staff SPA
+Food
+GL Beverge, GL D&D, GL Import, GL Seasonal, GL Confectionery, GL HBC, GL Produce, GL Fish, GL Meat, GL Delica, GL Sushi, GL Bakery
+Softline
+GL Ladies, GL Men, GL Inner, GL Sport, GL SBA, GL Kid SBA, GL Kid Fashion, GL Kid Baby, GL Kid Toy
+Hardline
+GL House2F, GL HouseGF, GL HCoordy, GL HFashion, GL SHA, GL LHA, GL Multi, GL Station, GL MyCloset
+Group
+foodline1, foodline2, softline, hardline, DL Kids
+Dev
+Test
+PHÂN TÍCH MÀN HÌNH TRANG CHỦ
+DATA SOURCE 
+SharePoint List: HOME
+Column
+Type
+Ghi chú
+Name Group
+Text
+Tên menu item
+Image
+Image/URL
+Icon hiển thị trong gallery
+NAVIGATION MAP
+Trang Chủ (Gallery1 - OnSelect)
+  ├── "Công việc hàng ngày"  → Navigate('Công việc hàng ngày')
+  ├── "Tham khảo"            → Navigate('Tham khảo')
+  └── "Nguyên tắc trưng bày" → Navigate('Nguyên tắc trưng bày')
+Image1 (Avatar) → Navigate('Hồ sơ cá nhân')
+COMPONENTS TÁI SỬ DỤNG
+Component
+Properties
+Xuất hiện ở
+Header
+Fill: #B50081, Height: 77
+Trang Chủ (và nhiều màn hình khác)
+Footer
+Fill: #B50081, Height: 80, Y: 1056
+Trang Chủ (và nhiều màn hình khác)
+LƯU Ý
+userimg.Full → userimg không phải text URL, mà là object (attachment SharePoint hoặc Image record). Khi rebuild cần xử lý đúng kiểu dữ liệu này — khả năng cao là SharePoint Attachment, cần dùng First(userimg).Value hoặc tương tự.
+Gallery pattern: HOME list đóng vai trò config table cho menu — muốn thêm/bớt menu item chỉ cần sửa SharePoint, không cần đụng code. Đây là pattern tốt, nên giữ lại khi rebuild.
+SƠ ĐỒ APP (cập nhật đến nay)
+Login
+  └── Trang Chủ
+        ├── Công việc hàng ngày
+        ├── Tham khảo
+        ├── Nguyên tắc trưng bày
+        └── Hồ sơ cá nhân
+PHÂN TÍCH MÀN HÌNH CÔNG VIỆC HÀNG NGÀY
+DATA SOURCE 
+SharePoint List: WORK
+Column
+Type
+Ghi chú
+Name Module
+Text
+Tên module hiển thị
+Image
+Image
+Icon
+Phân quyền 1
+Text
+Value: "FOODLINE1"
+Phân quyền 2
+Text
+Value: "FOODLINE 2"
+Phần quyền 3
+Text
+4 Typo: "Phân" thay vì "Phân" - Value: "SOFTLINE"
+Phân quyền 4
+Text
+Value: "HARDLINE"
+Phân quyền 5
+Text
+Value: "SM,SPA"
+PERMISSION FILTER LOGIC
+// Hiện tại: 5 cột riêng biệt cho từng nhóm
+usernh="FOODLINE 1" → Filter(WORK, 'Phân quyền 1'="FOODLINE 1")
+usernh="FOODLINE 2" → Filter(WORK, 'Phân quyền 2'="FOODLINE 2")
+usernh="SOFTLINE"   → Filter(WORK, 'Phần quyền 3'="SOFTLINE")   // ← typo cột
+usernh="HARDLINE"   → Filter(WORK, 'Phân quyền 4'="HARDLINE")
+usernh="SM"/"SPA"   → Filter(WORK, 'Phân quyền 5'="SM,SPA")
+Vấn đề thiết kế: Mỗi nhóm phân quyền chiếm 1 cột riêng → khó scale. Khi rebuild nên dùng 1 cột Permissions lưu dạng multi-select hoặc bảng join.
+NAVIGATION TỪ GALLERY
+Name Module
+Navigate đến
+Châm điểm VMD
+"Chấm điểm VMD'
+Kiểm tra VMD
+'Kiểm tra VMD'
+Mượn - Trả vật tư
+"Mượn - Trả vật tư"
+Quản lý trang trí
+'Quản lý trang trí'
+Châm điểm POP
+"Chấm điểm POP'
+Kiểm tra POP
+'Kiểm tra POP'
+Báo cáo POP/VMD
+'Báo cáo POS/VMD'
+! Typo: POP→POS
+PROFILE POPUP
+Variable: Boxprofile
+Element
+Value/Action
+Avatar
+User () .Image (M365, không phải userimg)
+Email
+User(). Email
+Tên
+usern (từ SharePoint USER table)
+Đóng
+Set (Boxprofile, false)
+Đăng xuất
+Navigate (Login)
+⚠️ Không thấy Set(Boxprofile, true) ở màn hình này — likely trigger nằm trong Header component. Cần kiểm tra component Header.
+⚠️ Image1_3 (avatar góc phải) → Navigate('Hồ sơ cá nhân') — mâu thuẫn với pattern Boxprofile ở các controls khác.
+SƠ ĐỒ APP (cập nhật)
+Login
+  └── Trang Chủ
+        ├── Công việc hàng ngày
+        │     ├── Chấm điểm VMD
+        │     ├── Kiểm tra VMD
+        │     ├── Mượn - Trả vật tư
+        │     ├── Quản lý trang trí
+        │     ├── Chấm điểm POP
+        │     ├── Kiểm tra POP
+        │     └── Báo cáo POS/VMD
+        ├── Tham khảo
+        ├── Nguyên tắc trưng bày
+        └── Hồ sơ cá nhân
+PHÂN TÍCH MÀN HÌNH CHẤM ĐIỂM POP
+DATA SOURCES
+List
+Dùng khi
+Ghi chú
+CHẤM ĐIỂM POP
+GL roles + SPA + Test
+List chính
+KIỂM TRA POP
+foodline1/2, softline, hardline
+A Bug - đọc sai list
+Phân tích màn hình Chấm điểm POP
+Column
+Encoded name
+Hiến thị
+Quầy hàng
+Qu_x00e2_x0300_yha_x0300_ng
+Tên quây
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Nhóm ngành
+Kiểm tra POP
+Ki_x00ea_x0309_mtraPOP
+Đạt/Không đạt
+Created
+Created
+Ngày tạo
+ID
+ID
+Sort key
+ROLE → QUẦY HÀNG MAPPING (hardcoded trong If chain)
+RoleFilter
+Quầy hàng
+permission / Ghi chú
+GL Beverge
+Beverge
+GL D&D
+D&D
+GL Import
+Import
+GL Seasonal
+Seasonal and Material
+GL Confectionery
+Confectionery
+GL HBC
+Non-food and HBC
+GL Produce / Fish / Meat / Delica / Sushi / Bakery
+(same name)
+GL Ladies / Men / Inner / Sport
+(same name)
+GL SBASBA
+(Shoes/Bag/ Acc)
+GL Kid SBA / Fashion / Baby / Toy
+(same name)
+DL Kids
+Kid SBA OR Kid Fashion OR Kid Baby OR Kid Toy
+GL MyCloset
+MyCloset
+GL House2F
+Household 2F
+GL HouseGF
+Household GF
+GL HCoordy
+Home Coordy
+GL HFashion
+Home Fashion
+GL SHA / LHA
+(same name)
+GL Multi
+Multimedia
+GL Station
+Stationery
+Test
+Không filter quầy hàng (xem tất cả)
+permission="SPA"
+foodline1/2, softline, hardline
+⚠️ Filter từ KIỂM TRA POP, cột Ngành hàng
+PERMISSION LOGIC — Nút "Thêm mới"
+DisplayMode = If(
+    permission = "Ngành hàng" || permission = "Test",  → Disabled
+    permission = "SPA",                                 → Edit
+    // else: không có case → DisplayMode.View mặc định
+)
+VARIABLES
+Variable
+Type
+Set ở đâu
+sortDirection
+SortOrder
+icSort_1.OnSelect — toggle Asc/Desc
+sortColumn
+Text
+icSort_1.OnSelect
+- luôn = "sortID"
+varItem
+Record
+Gallery.OnSelect - lưu row được chọn
+NAVIGATION
+Chấm điểm POP
+  ├── [Gallery select]  → Set(varItem) → 'Chấm điểm POP chi tiết'
+  ├── [Thêm mới]        → 'Chấm điểm POP thêm mới' + NewForm(frm_mark)
+  └── [Trở về]          → 'Công việc hàng ngày'
+VẤN ĐỀ LỚN NHẤT — Code duplication
+35 If-case làm cùng 1 việc. Khi rebuild, thay bằng lookup table trong SharePoint:
+SharePoint List mới: ROLE_QUAYHANG_MAPPING
+Role
+QuayHang
+List nguồn
+GL Beverge
+Beverge
+CHÂM ĐIỂM POP
+GL D&D
+D&D
+CHÂM ĐIỂM POP
+•••
+•••
+•..
+// Rebuild: thay 200 dòng If bằng ~10 dòng
+With(
+    {_map: LookUp(ROLE_QUAYHANG_MAPPING, Role = userrolevalue)},
+    SortByColumns(
+        Filter(
+            AddColumns('CHẤM ĐIỂM POP', sortID, ID),
+            And(
+                Or(IsBlank(dpStartDate_1.SelectedDate), Created >= dpStartDate_1.SelectedDate),
+                Or(IsBlank(dpEndDate_1.SelectedDate), Created <= dpEndDate_1.SelectedDate),
+                IsBlank(_map.QuayHang) || 'Quầy hàng' = _map.QuayHang
+            )
+        ),
+        sortColumn, sortDirection
+    )
+)
+SƠ ĐỒ APP (cập nhật)
+Chấm điểm POP
+  ├── Chấm điểm POP chi tiết   [varItem]
+  └── Chấm điểm POP thêm mới  [frm_mark - NewForm]
+DATA SOURCES (cập nhật)
+List
+Dùng ở
+USER
+Login
+HOME
+Trang Chủ
+WORK
+Công việc hàng ngày
+CHẤM ĐIỂM POP
+Châm điểm POP
+KIẾM TRA POP
+Châm điểm POP (group roles - có thể bug)
+PHÂN TÍCH MÀN HÌNH CHẤM ĐIỂM POP THÊM MỚI
+FORM
+frm_mark
+Property
+Value
+DataSource
+'CHẤM ĐIỂM POP'
+DefaultMode
+FormMode.New
+OnSuccess
+Back()
+Submit trigger
+btn_insert_6 → SubmitForm(frm_mark)
+FIELDS
+DataCard
+Column (encoded)
+Control
+Logic
+Người kiểm tra
+Ng_x01b0__x01a1__x0300_iki_x00ea
+TextInput
+Default = usern, Disabled (auto-fill)
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Dropdown
+Items = Distinct('THÔNG TIN QUẦY HÀNG', 'Ngành hàng')
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Dropdown
+Cascading — filter theo Ngành hàng đã chọn
+CASCADING DROPDOWN
+// Ngành hàng (DataCardValue14)
+Items: Distinct('THÔNG TIN QUẦY HÀNG', 'Ngành hàng')
+// Quầy hàng (DataCardValue16) — lọc theo Ngành hàng
+Items: Distinct(
+    Filter('THÔNG TIN QUẦY HÀNG', 'Ngành hàng' = DataCardValue14.Selected.Value),
+    'Quầy hàng'
+)
+DATA SOURCE MỚI — THÔNG TIN QUẦY HÀNG
+Đây chính là lookup table cho mapping Ngành hàng → Quầy hàng. Irony: table này tồn tại sẵn nhưng screen "Chấm điểm POP" không dùng nó — thay vào đó hardcode 35 If-case!
+Column
+Dùng để
+Ngành hàng
+Dropdown level 1
+Quầy hàng
+Dropdown level 2 (cascading)
+COLUMNS ĐÃ XÁC NHẬN — CHẤM ĐIỂM POP
+Column
+Internal name
+Nhập từ
+Người kiểm tra
+Ng_X01b0_X01a1_X0300_iki_х00ea
+Auto = usern
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Dropdown
+Quây hàng
+Qu_x00e2_x0300_yha_x0300_ng
+Cascading dropdown
+Kiểm tra POP
+Ki_x00ea_x0309_mtraPoP
+(xác nhận ở screen chi tiết)
+Created
+SharePoint auto
+-
+ID
+SharePoint auto
+ー
+DATA SOURCES — TỔNG HỢP ĐẦY ĐỦ
+List
+Vai trò
+Dùng ở
+USER
+Auth & user profile
+Login
+HOME
+Config menu chính
+Trang Chủ
+WORK
+Config menu công việc + phân quyền
+Công việc hàng ngày
+CHẤM ĐIỂM POP
+Data châm điểm
+Châm điểm POP, thêm mới, chi tiêt
+KIẾM TRA POP
+Data kiểm tra (supervisor view)
+Châm điểm POP (group roles)
+THÔNG TIN QUẦY
+HÀNG
+Lookup: Ngành hàng → Quây hàng
+Châm điểm POP thêm mới
+FIX ĐỀ XUẤT CHO SCREEN "CHẤM ĐIỂM POP"
+Thay 35 If-case bằng cách dùng THÔNG TIN QUẦY HÀNG (đã có sẵn):
+// Bước 1: Thêm cột QuayHang vào USER list (hoặc ROLE_MAP)
+// Bước 2: Filter đơn giản
+With(
+    {_quayhang: LookUp('THÔNG TIN QUẦY HÀNG', Role = userrolevalue).'Quầy hàng'},
+    SortByColumns(
+        Filter(
+            AddColumns('CHẤM ĐIỂM POP', sortID, ID),
+            And(
+                Or(IsBlank(dpStartDate_1.SelectedDate), Created >= dpStartDate_1.SelectedDate),
+                Or(IsBlank(dpEndDate_1.SelectedDate), Created <= dpEndDate_1.SelectedDate),
+                IsBlank(_quayhang) || 'Quầy hàng' = _quayhang
+            )
+        ),
+        sortColumn, sortDirection
+    )
+)
+Phân tích màn hình Chấm điểm POP chi tiết
+FORM: frm_mark_1
+Property
+Value
+DataSource
+'CHẤM ĐIỂM POP'
+DefaultMode
+FormMode.View
+Item
+LookUp('CHẤM ĐIỂM POP', ID = varItem.ID)
+COLUMNS ĐÃ XÁC NHẬN ĐẦY ĐỦ — CHẤM ĐIỂM POP
+Column
+Encoded
+Type
+Values
+Created
+Created
+DateTime
+Auto
+Người kiểm tra
+Ng_x01b0__x01a1__x0300_iki_x00ea
+Text
+= usern
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Text/Choice
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Text/Choice
+Kiểm tra POP
+Ki_x00ea__x0309_mtraPOP
+Text
+"Đạt" (xanh) / "Không đạt" (đỏ)
+ID
+ID
+Number
+SharePoint auto
+DATA SOURCE MỚI — LỖI TRƯNG BÀY POP
+Column
+Type
+Ghi chú
+Ref id
+Number
+FK → CHẤM ĐIỂM POP.ID
+Lỗi trưng bày của POP
+Text
+Mô tả lỗi
+Hình ảnh lỗi
+Image
+Ảnh trước
+Hình ảnh sửa lỗi
+Image
+Ảnh sau khi sửa
+ID
+Number
+SharePoint auto
+RELATIONSHIP
+CHẤM ĐIỂM POP (1)
+    └──< LỖI TRƯNG BÀY POP (N)   via: 'Ref id' = CHẤM ĐIỂM POP.ID
+VARIABLES SET khi chọn lỗi
+powerfx
+Set(itemId,   ThisItem.ID)
+Set(itemIMG,  ThisItem.'Hình ảnh lỗi')
+Set(itemIMG2, ThisItem.'Hình ảnh sửa lỗi')
+Navigate('Lỗi POP chi tiết')
+DELETE — BUG NGHIÊM TRỌNG
+powerfx
+// Hiện tại: LookUp chỉ xóa 1 record đầu tiên
+Remove('LỖI TRƯNG BÀY POP', LookUp('LỖI TRƯNG BÀY POP', 'Ref id' = varItem.ID));
+Remove('CHẤM ĐIỂM POP', LookUp('CHẤM ĐIỂM POP', ID = varItem.ID))
+// Fix: dùng RemoveIf để cascade delete đúng
+RemoveIf('LỖI TRƯNG BÀY POP', 'Ref id' = varItem.ID);
+RemoveIf('CHẤM ĐIỂM POP', ID = varItem.ID)
+NAVIGATION
+Chấm điểm POP chi tiết
+  ├── [Chỉnh sửa]      → 'Chấm điểm POP chỉnh sửa'
+  ├── [Xóa]            → Remove cả 2 tables → 'Chấm điểm POP'
+  ├── [Trở về]         → 'Chấm điểm POP'
+  └── [gal_POP_1 item] → Set(itemId/IMG/IMG2) → 'Lỗi POP chi tiết'
+TỔNG HỢP DATA SOURCES (cập nhật)
+List
+Vai trò
+Quan hệ
+USER
+Auth
+—
+HOME
+Config menu
+—
+WORK
+Config modules + phân quyền
+—
+THÔNG TIN QUẦY HÀNG
+Lookup Ngành→Quầy
+—
+CHẤM ĐIỂM POP
+Data chấm điểm
+1:N với LỖI
+LỖI TRƯNG BÀY POP
+Sub-data lỗi
+FK: Ref id → CHẤM ĐIỂM POP
+KIỂM TRA POP
+Data kiểm tra (supervisor)
+—
+SCREENS CHƯA PHÂN TÍCH (cần paste)
+Còn 2 screens liên quan đến module POP:
+Chấm điểm POP chỉnh sửa
+Lỗi POP chi tiết
+Phân tích màn hình Chấm điểm POP chỉnh sửa
+FORM: frm_mark_2 — Edit mode
+Field
+Control
+Permission
+Ngành hàng
+Dropdown
+Chỉ userrolevalue = "GL SPA" mới edit được
+Quầy hàng
+Dropdown (cascading)
+Chỉ userrolevalue = "GL SPA" mới edit được
+Kiểm tra POP
+Radio ["Đạt", "Không đạt"]
+Mọi role có quyền
+Submit: SubmitForm(frm_mark_2) → Navigate('Chấm điểm POP')
+CONNECTOR MỚI — Office365Outlook
+Nút "Gửi thông báo" gọi Office365Outlook.SendEmailV2 với 30 If-case hardcode email per quầy hàng.
+Mapping Quầy hàng → Email:
+Quầy hàng
+Email
+Beverge
+beverage.binhtan@aeon.com.vn
+D&D
+dairy.binhtan@aeon.com.vn
+Import / Seasonal
+material.binhtan@aeon.com.vn
+Confectionery
+confectionery.binhtan@aeon.com.vn
+Non-food and HBC
+hbc.binhtan@aeon.com.vn
+Produce
+produce.binhtan@aeon.com.vn
+Fish / Meat
+perishable.binhtan@aeon.com.vn
+Delica
+delica.binhtan@aeon.com.vn
+Sushi
+sushi.binhtan@aeon.com.vn
+Bakery
+bakery.binhtan@aeon.com.vn
+Ladies
+lady.binhtan@aeon.com.vn
+Men
+men.binhtan@aeon.com.vn
+Inner
+inner.binhtan@aeon.com.vn
+Sport
+inner.binhtan@aeon.com.vn ⚠️ Sai — dùng chung email Inner
+SBA
+sba.binhtan@aeon.com.vn
+Kid SBA/Fashion/Baby/Toy
+kid.binhtan@aeon.com.vn
+Household 2F/GF
+household.binhtan@aeon.com.vn
+Home Coordy
+homecoordy.binhtan@aeon.com.vn
+Home Fashion
+homefashion.binhtan@aeon.com.vn
+SHA / LHA
+electrical.binhtan@aeon.com.vn
+Multimedia
+multimedia.binhtan@aeon.com.vn
+Stationery
+multimedia.binhtan@aeon.com.vn ⚠️ Sai — dùng chung email Multimedia
+MyCloset
+mycloset.binhtan@aeon.com.vn
+FIX ĐỀ XUẤT — Thêm cột Email vào THÔNG TIN QUẦY HÀNG
+Thay 300+ dòng If-chain bằng:
+powerfx
+With(
+    {_email: LookUp('THÔNG TIN QUẦY HÀNG', 'Quầy hàng' = varItem.'Quầy hàng').Email},
+    Office365Outlook.SendEmailV2(
+        _email,
+        "THÔNG BÁO LỖI TRƯNG BÀY POP/POS MỚI",
+        "Quầy " & varItem.'Quầy hàng' & " có lỗi trưng bày mới..."
+    )
+);
+Notify("Đã gửi thông báo", NotificationType.Success, 5000)
+SCREEN MỚI PHÁT HIỆN
+btn_back_14 "Tạo lỗi" → Navigate('Lỗi POP') & NewForm(frmPOP)
+SƠ ĐỒ MODULE POP (hoàn chỉnh đến nay)
+Chấm điểm POP
+  ├── Chấm điểm POP thêm mới   [frm_mark - New]
+  └── Chấm điểm POP chi tiết   [varItem]
+        ├── Chấm điểm POP chỉnh sửa  [frm_mark_2 - Edit]
+        │     ├── Lỗi POP             [frmPOP - New]
+        │     └── Lỗi POP chi tiết   [itemId/IMG/IMG2]
+        └── Lỗi POP chi tiết         [itemId/IMG/IMG2]
+THÔNG TIN QUẦY HÀNG — Cần thêm cột khi rebuild
+Column hiện có
+Cần thêm
+Ngành hàng
+Email (email quầy hàng)
+Quầy hàng
+Role (mapping với USER.Role)
+Phân tích màn hình Lỗi POP
+FORM: frmPOP
+Property
+Value
+DataSource
+'LỖI TRƯNG BÀY POP'
+DefaultMode
+FormMode.New
+OnSuccess
+Back()
+COLUMNS ĐÃ XÁC NHẬN ĐẦY ĐỦ — LỖI TRƯNG BÀY POP
+Column
+Encoded
+Type
+Source
+Lỗi trưng bày của POP
+L_x00f4__x0303_itr_x01b0_ngba_x0
+Dropdown
+Từ Thông tin lỗi POP
+Điểm của POP
+OData__x0110_i_x00ea__x0309_mcu_x0309_
+Number
+Auto-calculated, Disabled
+Hình ảnh lỗi
+Hi_x0300_nha_x0309_nhl_x00f4__x0
+Image
+AddMedia upload
+Ghi chú
+Ghichu_x0301_
+Text
+Ref id
+Refid
+Number
+varItem.ID — hidden
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Text
+varItem.Ngành hàng — hidden
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Text
+varItem.Quầy hàng — hidden
+Tháng
+Tha_x0301_ng
+Text
+"Tháng 01"..."Tháng 12" — hidden
+DATA SOURCE MỚI — Thông tin lỗi POP
+Column
+Dùng để
+Lỗi vi phạm
+Dropdown options cho Lỗi trưng bày của POP
+SCORING LOGIC — Điểm auto theo loại lỗi
+Điểm chỉ được gán nếu lỗi type này chưa tồn tại cho varItem.ID (chống duplicate):
+Lỗi vi phạm
+Điểm
+Dụng cụ trưng bày hư, gãy, vỡ
+5
+Sử dụng sai dụng cụ trưng bày
+5
+POP/POS trưng bày sai sản phẩm, sai vị trí hoặc POP 1 mặt
+5
+POP/POS chồng chéo, bị mất thông tin
+5
+POP hoặc dụng cụ bẩn/POP cũ hoặc rách
+5
+POP/POS hết hạn
+10
+POP thiếu thời gian chạy CTKM
+20
+Giá cả không tuân theo luật niêm yết giá
+10
+Không thể hiện đủ các thông tin
+10
+Sử dụng sai form/form tự phát
+10
+Sai nguyên tắc trưng bày
+10
+POP viết tay/tẩy xóa
+5
+Không có lỗi
+0
+Business rule: Mỗi loại lỗi chỉ được ghi 1 lần per phiên chấm điểm.
+VẤN ĐỀ VÀ FIX ĐỀ XUẤT
+1. Điểm hardcoded trong form — Thông tin lỗi POP đã tồn tại nhưng không lưu điểm:
+// Thêm cột Diem vào 'Thông tin lỗi POP'
+// Rebuild: thay toàn bộ If-chain bằng:
+Default: =LookUp('Thông tin lỗi POP', 'Lỗi vi phạm' = dd_pop.Selected.Value).Diem
+2. Tháng formula dư thừa:
+powerfx
+// Cũ: If(Month(Now())=1,"Tháng 01",...12 cases)
+// Mới:
+"Tháng " & Text(Month(Now()), "00")
+DATA SOURCES — TỔNG HỢP HOÀN CHỈNH
+List
+Vai trò
+Quan hệ
+USER
+Auth & profile
+—
+HOME
+Config menu chính
+—
+WORK
+Config modules + phân quyền
+—
+THÔNG TIN QUẦY HÀNG
+Lookup Ngành→Quầy + Email
+—
+Thông tin lỗi POP
+Lookup loại lỗi + điểm
+—
+CHẤM ĐIỂM POP
+Data phiên chấm
+1:N → LỖI
+LỖI TRƯNG BÀY POP
+Sub-data từng lỗi
+FK: Ref id → CHẤM ĐIỂM POP
+KIỂM TRA POP
+View cho supervisor
+—
+SƠ ĐỒ MODULE POP — HOÀN CHỈNH
+Chấm điểm POP (list + filter)
+  ├── [Thêm mới] → Chấm điểm POP thêm mới
+  └── [Chọn item] → Chấm điểm POP chi tiết
+        ├── [Chỉnh sửa] → Chấm điểm POP chỉnh sửa
+        │     ├── [Tạo lỗi]       → Lỗi POP (frmPOP New)
+        │     └── [Chọn lỗi item] → Lỗi POP chi tiết
+        └── [Chọn lỗi item] → Lỗi POP chi tiết
+Phân tích màn hình Lỗi POP chi tiết
+FORM: frmPOP_1 — View mode
+Property
+Value
+DataSource
+'LỖI TRƯNG BÀY POP'
+Item
+LookUp('LỖI TRƯNG BÀY POP', ID = itemId)
+DefaultMode
+View (không set → mặc định)
+COLUMNS HOÀN CHỈNH — LỖI TRƯNG BÀY POP
+Column
+Encoded
+Type
+Ghi chú
+Lỗi trưng bày của POP
+L_x00f4__x0303_itr_x01b0_ngba_x0
+Text
+Từ Thông tin lỗi POP
+Điểm của POP
+OData__x0110_i_x00ea__x0309_mcu_x0309_
+Number
+Auto-calculated
+Hình ảnh lỗi
+Hi_x0300_nha_x0309_nhl_x00f4__x0
+Image
+Ảnh trước
+Hình ảnh sửa lỗi
+Hi_x0300_nha_x0309_nhs_x01b0__x0
+Image
+Ảnh sau
+Ghi chú
+Ghichu_x0301_
+Text
+Phản hồi thông tin
+Pha_x0309_nh_x00f4__x0300_ith_x0
+Text
+Mới — GL phản hồi
+Ref id
+Refid
+Number
+FK → CHẤM ĐIỂM POP
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Text
+Hidden
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Text
+Hidden
+Tháng
+Tha_x0301_ng
+Text
+Hidden
+PERMISSION — Navigation "Trở về" khác nhau theo role
+powerfx
+If(
+    permission = "SPA",       → Navigate('Chấm điểm POP chỉnh sửa')
+    permission = "Ngành hàng" || permission = "Test",
+                              → Navigate('Chấm điểm POP chi tiết')
+)
+Nút
+SPA
+Ngành hàng
+Test
+Chỉnh sửa
+✅
+✅
+❌ Disabled
+Xóa
+✅ Edit
+❌ Disabled
+❌ Disabled
+Trở về
+→ chỉnh sửa
+→ chi tiết
+→ chi tiết
+SCREENS MỚI PHÁT HIỆN
+Screen
+Trigger
+Variable
+'Hình ảnh'
+Click ảnh lỗi/sửa lỗi
+img = itemIMG hoặc img = itemIMG2
+'Lỗi POP chỉnh sửa'
+btn "Chỉnh sửa"
+itemId
+BUSINESS FLOW HOÀN CHỈNH — Module POP
+[SPA] Tạo phiên chấm điểm
+  → Kiểm tra POP: Đạt / Không đạt
+  → Nếu có lỗi: Tạo lỗi + upload ảnh
+  → Gửi email thông báo cho GL quầy hàng
+[GL] Nhận email → mở app → xem Lỗi POP chi tiết
+  → Sửa lỗi thực tế → Upload ảnh sửa lỗi
+  → Điền Phản hồi thông tin
+[SPA/Supervisor] Xem Báo cáo POS/VMD tổng hợp
+Module POP đã phân tích hoàn chỉnh 100%. Tổng cộng 7 screens + 2 data sources chính.
+PHÂN TÍCH MÀN HÌNH LỖI POP CHỈNH SỬA
+FORM: frmPOP_2 — Edit mode
+Property
+Value
+DataSource
+'LỖI TRƯNG BÀY POP'
+Item
+LookUp('LỖI TRƯNG BÀY POP', ID = itemId)
+Submit
+SubmitForm(frmPOP_2) & Navigate('Lỗi POP chi tiết')
+⚠️ Bug: Dùng & (string concat) thay vì ; (sequential). Nên sửa thành SubmitForm(frmPOP_2); Navigate(...).
+PERMISSION MATRIX — Field level
+Field
+GL SPA
+Ngành hàng
+Staff SPA
+Lỗi trưng bày của POP
+✅ Edit
+❌ Disabled
+❌ Disabled
+Điểm của POP
+✅ Edit
+❌ Disabled
+❌ Disabled
+Hình ảnh lỗi
+✅ Edit
+❌ Disabled
+❌ Disabled
+Ghi chú
+✅ Edit
+❌ Disabled
+✅ Edit
+Hình ảnh sửa lỗi
+✅ Edit
+✅ Edit
+❌ Disabled
+Phản hồi thông tin
+✅ Edit
+✅ Edit
+❌ Disabled
+BUSINESS FLOW RÕ RÀNG
+Permission matrix trên xác nhận rõ vai trò của từng actor:
+[Staff SPA / GL SPA]  → Tạo lỗi: điền Lỗi vi phạm + Điểm + Hình ảnh lỗi + Ghi chú
+[GL Ngành hàng]       → Phản hồi: upload Hình ảnh sửa lỗi + điền Phản hồi thông tin
+[GL SPA]              → Có thể chỉnh sửa tất cả (supervisor)
+MODULE POP — HOÀN CHỈNH 100%
+Screens (9 màn hình):
+Chấm điểm POP
+├── Chấm điểm POP thêm mới
+└── Chấm điểm POP chi tiết
+      ├── Chấm điểm POP chỉnh sửa
+      │     └── Lỗi POP (tạo mới)
+      └── Lỗi POP chi tiết
+            └── Lỗi POP chỉnh sửa
+Screens phụ: Hình ảnh (full-screen image viewer, dùng biến img)
+Data sources:
+List
+Columns chính
+CHẤM ĐIỂM POP
+Người kiểm tra, Ngành hàng, Quầy hàng, Kiểm tra POP, Created
+LỖI TRƯNG BÀY POP
+Lỗi vi phạm, Điểm, Ảnh lỗi, Ảnh sửa, Ghi chú, Phản hồi, Ref id, Ngành hàng, Quầy hàng, Tháng
+Thông tin lỗi POP
+Lỗi vi phạm (→ cần thêm cột Điểm khi rebuild)
+THÔNG TIN QUẦY HÀNG
+Ngành hàng, Quầy hàng (→ cần thêm Email, Role khi rebuild)
+KIỂM TRA POP
+Ngành hàng (supervisor view — cần xác nhận columns)
+Phân tích màn hình Kiểm tra VMD
+DATA SOURCE — KIỂM TRA VMD
+Columns hiển thị trong gallery:
+Column
+Vị trí
+Ngành hàng
+Dòng 1
+Quầy hàng
+Dòng 2
+Created
+Dòng 3 (italic)
+ROLE FILTER — Chỉ Softline + Hardline (không có Food)
+Role
+Filter Quầy hàng
+DL Kids
+Kid SBA OR Kid Fashion OR Kid Baby OR Kid Toy
+GL Ladies/Men/Inner/Sport
+(same name)
+GL SBA
+SBA (Shoes/Bag/ Acc)
+GL Kid SBA/Fashion/Baby/Toy
+(same name)
+GL House2F
+Household 2F
+GL HouseGF
+Household GF
+GL HCoordy
+Home Coordy
+GL HFashion
+Home Fashion
+GL SHA/LHA
+(same name)
+GL Multi
+Multimedia
+GL Station
+Stationery
+GL MyCloset
+MyCloset
+permission="SPA" / Test
+Tất cả (không filter)
+softline
+Filter Ngành hàng = "SOFTLINE"
+hardline
+Filter Ngành hàng = "HARDLINE"
+⚠️ Không có GL Beverge, GL Fish, GL Meat, v.v. — VMD chỉ áp dụng cho Softline & Hardline, không có Foodline.
+PERMISSION — "Thêm mới"
+powerfx
+DisplayMode = If(
+    permission = "Test" || usernh = "FOODLINE 1" || usernh = "FOODLINE 2",
+    Disabled
+    // else: Edit (default)
+)
+Foodline bị chặn — xác nhận VMD không áp dụng cho ngành hàng thực phẩm.
+BUGS
+1. Navigate(...) & Set(varItem, Blank()) & NewForm(Form13) — dùng & thay vì ; (lặp lại pattern lỗi từ các screen trước).
+2. Date filter cho SPA/Test dùng Created < dpEndDate (dấu < thiếu =) — không nhất quán với tất cả cases khác dùng <=.
+NAVIGATION
+Kiểm tra VMD
+  ├── [Gallery] → Set(varItem) → 'Kiểm tra VMD chi tiết'
+  ├── [Thêm mới] → 'Kiểm tra VMD Thêm mới' + Set(varItem,Blank()) + NewForm(Form13)
+  ├── [Xem tất cả] → Reset date pickers
+  └── [Trở về] → 'Công việc hàng ngày'
+SO SÁNH MODULE VMD vs. POP
+Điểm
+POP
+VMD
+Scope
+Tất cả ngành hàng
+Softline + Hardline only
+Form name
+frm_mark
+Form13
+Pattern filter
+Giống hệt
+Giống hệt
+Email notification
+Có
+Chưa rõ
+Sub-data (lỗi)
+LỖI TRƯNG BÀY POP
+Chưa rõ
+DATA SOURCES — CẬP NHẬT
+List
+Vai trò
+... (như trước)
+KIỂM TRA VMD
+Data kiểm tra VMD
+Phân tích màn hình Kiểm tra VMD Thêm mới
+FORM: Form13
+Property
+Value
+DataSource
+'KIỂM TRA VMD'
+Submit
+SubmitForm(Form13); Navigate('Kiểm tra VMD') — ✅ dùng ; đúng
+COLUMNS XÁC NHẬN — KIỂM TRA VMD
+Column
+Encoded
+Visible
+Default
+Người kiểm tra
+Ng_x01b0__x01a1__x0300_iki_x00ea
+✅
+usern, Disabled
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+✅
+Auto từ usernh
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+✅
+Auto từ userrolevalue
+Tháng
+Tha_x0301_ng
+❌ Hidden
+"Tháng 01"..."Tháng 12"
+Mã người dùng
+Ma_x0303_ng_x01b0__x01a1__x0300_
+❌ Hidden
+userid — Mới, không có trong POP
+DATA SOURCES MỚI — 2 lookup tables riêng cho VMD
+List
+Dùng khi
+Columns
+THÔNG TIN QUẦY HÀNG VMD
+Tất cả (trừ DL Kids)
+Ngành hàng, Quầy hàng
+Thông tin quầy kids
+user = "1004.dlkids"
+Ngành hàng, Quầy hàng
+⚠️ VMD dùng 2 lookup tables riêng biệt thay vì dùng chung THÔNG TIN QUẦY HÀNG (của POP). Lý do có thể là danh sách quầy hàng VMD khác POP.
+SPECIAL CASE — User "1004.dlkids"
+DL Kids được hardcode theo user (username), không theo userrolevalue:
+powerfx
+// Ngành hàng items:
+If(user = "1004.dlkids",
+    Distinct('Thông tin quầy kids', 'Ngành hàng'),
+    Distinct('THÔNG TIN QUẦY HÀNG VMD', 'Ngành hàng')
+)
+// Quầy hàng - DL Kids có thể tự chọn, GL roles bị disabled
+DisplayMode = If(user="1004.dlkids", Edit, permission="Ngành hàng", Disabled)
+QUẦY HÀNG — Default hardcoded (18 cases)
+powerfx
+If(userrolevalue="GL Ladies","Ladies",
+   userrolevalue="GL Men","Men",
+   userrolevalue="GL Inner","Inner",
+   ...18 cases...
+   userrolevalue="GL MyCloset","MyCloset")
+Đây là mapping tương tự POP — nên đưa vào THÔNG TIN QUẦY HÀNG VMD thành cột RoleDefault.
+SO SÁNH CHỈ KHÁC BIỆT: VMD vs. POP Thêm mới
+Điểm
+POP
+VMD
+Lookup table
+THÔNG TIN QUẦY HÀNG (1 table)
+THÔNG TIN QUẦY HÀNG VMD + Thông tin quầy kids (2 tables)
+Mã người dùng
+❌ Không có
+✅ userid — hidden
+DL Kids special case
+Không
+Có (user="1004.dlkids")
+Submit separator
+& (bug)
+; (đúng)
+Quầy hàng default
+Không có
+18 If-cases hardcoded
+DATA SOURCES — TỔNG HỢP CẬP NHẬT
+List
+Vai trò
+KIỂM TRA VMD
+Data kiểm tra VMD
+THÔNG TIN QUẦY HÀNG VMD
+Lookup Ngành→Quầy (VMD)
+Thông tin quầy kids
+Lookup riêng cho DL Kids (VMD)
+Phân tích Screen: "Kiểm tra VMD chi tiết"
+Mục đích
+Screen detail view hiển thị chi tiết một bản ghi kiểm tra VMD (Visual Merchandising Display) được chọn từ màn hình danh sách, định danh bởi biến varItem.ID.
+SharePoint Tables liên kết
+Table
+Vai trò
+Quan hệ
+Fields chính
+KIỂM TRA VMD
+Master
+PK: ID
+Ngành hàng, Quầy hàng, Người kiểm tra, Khu vực kiểm tra [VP/Bàn/Cột/Gondola/Sào/Vách], Created
+Kiểm tra VP
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra VP, Hình của VP, Hình sửa lỗi
+Kiểm tra Bàn
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra Bàn, Hình của Bàn, Hình sửa lỗi
+Kiểm tra Cột
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra Cột, Hình của Cột, Hình sửa lỗi
+Kiểm tra Gondola
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra Gondola, Hình của Gondola, Hình sửa lỗi
+Kiểm tra Sào
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra Sào, Hình của Sào, Hình sửa lỗi
+Kiểm tra Vách
+Child
+FK: Ref ID = varItem.ID
+Kiểm tra Vách, Hình của Vách, Hình sửa lỗi
+Business Logic chính
+Layout động theo Ngành hàng / Quầy hàng:
+Nhóm
+Các Quầy hàng
+Sections hiển thị
+Height
+HARDLINE
+HARDLINE
+Bàn, Cột, Gondola, Vách (không có VP, Sào)
+2300
+SBA
+Shoes/Bag/Acc, Kid SBA, Kid Toy
+VP, Bàn, Cột, Gondola, Vách (không có Sào)
+2720
+Fashion
+Men, Ladies, Inner, Sport, Kid Fashion, Kid Baby, MyCloset
+VP, Bàn, Cột, Gondola, Sào, Vách
+3150
+Status màu sắc: Mỗi kết quả khu vực kiểm tra hiển thị: 🟢 xanh = "Đạt" / 🔴 đỏ = không đạt.
+Phân quyền buttons:
+Chỉnh sửa + Xóa bị Disabled nếu: permission = "Test" OR usernh = "FOODLINE 1" OR usernh = "FOODLINE 2"
+Delete cascade (btn_remove_1): Xóa theo thứ tự VP → Bàn → Cột → Gondola → Sào → Vách → Master KIỂM TRA VMD, sau đó navigate về 'Kiểm tra VMD'.
+Variables
+Variable
+Loại
+Mục đích
+varItem
+Record
+Item VMD được chọn từ screen trước
+permission
+Text
+Global permission level
+usernh
+Text
+Ngành hàng của user hiện tại
+itemId
+Number
+ID child record khi click gallery
+itemIMG
+Image
+Ảnh lỗi của item gallery được chọn
+itemIMG2
+Image
+Ảnh sửa lỗi của item gallery được chọn
+userimg
+Record
+Thông tin ảnh đại diện user
+Navigation map
+Screen này → Điều hướng đến
+─────────────────────────────
+Logo click          → 'Trang Chủ'
+Avatar click        → 'Hồ sơ cá nhân'
+btn_back / btn_edit_2 (cancel) → 'Kiểm tra VMD'
+btn_edit_2          → 'Kiểm tra VMD chỉnh sửa'
+btn_remove_1        → 'Kiểm tra VMD' (sau khi xóa)
+gal_VP_2 select     → 'Check VP chi tiết'
+gal_Table_1 select  → 'Check Bàn chi tiết'
+gal_Column_1 select → 'Check Cột chi tiết'
+gal_Gondola_1 select→ 'Check Gondola chi tiết'
+gal_pole_1 select   → 'Check Sào chi tiết'
+gal_wall_1 select   → 'Check Vách chi tiết'
+Vấn đề cần lưu ý khi rebuild
+Performance: Screen gọi LookUp('KIỂM TRA VMD', ID=varItem.ID) lặp lại hàng chục lần. Cần thay bằng 1 biến local Set(varVMDRecord, LookUp(...)) trong OnVisible.
+Layout cứng: Dùng hardcoded Y coordinates thay vì dynamic layout — khó maintain. Khi rebuild nên dùng container/component hoặc tính Y tương đối.
+Xóa không có confirm: btn_remove_1 xóa cascade ngay lập tức, không có dialog xác nhận — cần thêm popup confirm.
+Cascade delete thủ công: Hiện dùng 6 lệnh Remove() riêng lẻ. Nên xem xét dùng Power Automate Flow để delete cascade an toàn hơn.
+Phân tích Screen: "Chấm điểm VMD"
+Mục đích
+List/Browse screen hiển thị danh sách bản ghi chấm điểm VMD, filter theo role của user và date range.
+SharePoint Table liên kết
+Table
+Vai trò
+Fields hiển thị
+CHẤM ĐIỂM VMD
+Master (read)
+ID, Quầy hàng, Ngành hàng, Created
+AddColumns('CHẤM ĐIỂM VMD', sortID, ID) — tạo alias sortID = ID để dùng cho sort. Không cần thiết, có thể sort trực tiếp trên ID.
+Business Logic: Filter theo Role
+Gallery dùng chuỗi If() 19 nhánh để filter Quầy hàng theo userrolevalue:
+userrolevalue
+Filter Quầy hàng
+GL Ladies
+Ladies
+GL Men
+Men
+GL Inner
+Inner
+GL Sport
+Sport
+GL SBA
+SBA (Shoes/Bag/ Acc)
+GL Kid SBA
+Kid SBA
+GL Kid Fashion
+Kid Fashion
+GL Kid Baby
+Kid Baby
+GL Kid Toy
+Kid Toy
+GL House2F
+Household 2F
+GL HouseGF
+Household GF
+GL HCoordy
+Home Coordy
+GL HFashion
+Home Fashion
+GL SHA
+SHA
+GL LHA
+LHA
+GL Multi
+Multimedia
+GL Station
+Stationery
+permission="SPA" OR userrolevalue="Test"
+Tất cả (không filter)
+softline
+Ngành hàng = "SOFTLINE"
+hardline
+Ngành hàng = "HARDLINE"
+Date filter (GL roles + SPA/Test): dùng dpStartDate_2 / dpEndDate_2 trên screen này.Date filter (softline/hardline): dùng dpEndDate / dpStartDate — ⚠️ controls này không có trong YAML screen → có thể là bug hoặc thuộc Header component.
+Variables
+Variable
+Kiểu
+Mục đích
+userrolevalue
+Text
+Role của user — quyết định nhánh filter
+permission
+Text
+"SPA", "Ngành hàng", "Test"
+sortColumn
+Text
+Tên cột sort (set = "sortID")
+sortDirection
+SortOrder
+Ascending / Descending
+varItem
+Record
+Item được chọn, truyền sang detail screen
+Boxprofile
+Boolean
+Hiển thị popup profile
+usern
+Text
+Tên hiển thị user
+userimg
+Record
+Ảnh đại diện user
+Controls chính
+Control
+Chức năng
+Gallery2
+Danh sách records — mỗi row: Ngành hàng / Quầy hàng / Created
+dpEndDate_2
+Date picker "Từ ngày" (placeholder bị đặt ngược)
+dpStartDate_2
+Date picker "Đến ngày" (placeholder bị đặt ngược)
+icSort_3
+Toggle sort asc/desc theo sortID
+btn_insert
+Navigate → Thêm mới (disabled nếu permission = "Ngành hàng" hoặc "Test")
+btn_back_1
+Navigate → Công việc hàng ngày
+btn_insert_48 (Hủy)
+Reset(dpStartDate_2); Reset(dpEndDate_2)
+Profile popup group
+Hiển thị email, tên, ảnh user; nút Đăng xuất → Login
+Navigation map
+Gallery item tap   → 'Chấm điểm VMD Chi tiết'  (Set varItem = ThisItem)
+btn_insert         → 'Chấm điểm VMD Thêm mới'  (Set varItem = Blank())
+btn_back_1         → 'Công việc hàng ngày'
+Logo               → 'Trang Chủ'
+Avatar             → 'Hồ sơ cá nhân'
+Đăng xuất          → Login
+Vấn đề cần lưu ý khi rebuild
+If-chain 19 nhánh — Anti-pattern nghiêm trọng. Khi rebuild nên dùng 1 SharePoint config table mapping userrolevalue → Quầy hàng, sau đó LookUp ra giá trị filter. Giảm từ 19 nhánh → 1 dòng Filter.
+Date picker đặt tên ngược — dpStartDate_2 có placeholder "Đến ngày" và ngược lại. Logic filter cũng bị ngược tương ứng. Cần kiểm tra lại khi rebuild.
+Softline/Hardline dùng sai date pickers — tham chiếu dpEndDate/dpStartDate (không có _2) không tồn tại trong screen → filter ngày không hoạt động cho 2 role này.
+AddColumns không cần thiết — chỉ để alias ID thành sortID. Xóa đi, sort trực tiếp trên ID.
+Delegation risk — Filter với Or() lồng nhau trên date + Ngành hàng có thể không delegate được nếu list > 500/2000 records.
+Phân tích Screen: "Chấm điểm VMD Thêm mới"
+Mục đích
+Form tạo mới một bản ghi chấm điểm VMD. User chọn Ngành hàng → Quầy hàng (cascading), tên tự động điền từ biến global, nhấn "Bắt đầu kiểm tra" để tạo record.
+SharePoint Tables liên kết
+Table
+Vai trò
+Thao tác
+Fields
+CHẤM ĐIỂM VMD
+Main data
+WRITE (Patch)
+Người kiểm tra, Ngành hàng, Quầy hàng
+THÔNG TIN QUẦY HÀNG VMD
+Config/Reference
+READ (Distinct + Filter)
+Ngành hàng, Quầy hàng
+THÔNG TIN QUẦY HÀNG VMD là bảng cấu hình danh mục — lần đầu xuất hiện, quan trọng cho toàn bộ app.
+Form Fields
+Control
+Label
+Logic
+txt_ucheck
+Người kiểm tra
+Default = usern; Disabled (read-only, auto-fill)
+dd_department
+Ngành hàng
+Distinct('THÔNG TIN QUẦY HÀNG VMD', 'Ngành hàng')
+dd_position
+Quầy hàng
+Distinct(Filter('THÔNG TIN QUẦY HÀNG VMD', 'Ngành hàng' = dd_department.Selected.Value), 'Quầy hàng') — cascading từ dd_department
+Submit Logic (btn_insert_1 — "Bắt đầu kiểm tra")
+powerfx
+Patch(
+    'CHẤM ĐIỂM VMD',
+    Defaults('CHẤM ĐIỂM VMD'),
+    {
+        'Người kiểm tra': txt_ucheck.Text,
+        'Ngành hàng': dd_department.Selected.Value,
+        'Quầy hàng': dd_position.Selected.Value
+    }
+);
+Navigate('Chấm điểm VMD', ScreenTransition.Cover)
+Sau khi Patch → navigate về list screen ('Chấm điểm VMD'), không navigate thẳng vào detail/scoring screen.
+Navigation map
+btn_insert_1 ("Bắt đầu kiểm tra")  → 'Chấm điểm VMD' (list)
+btn_back_3 ("Trở về")              → 'Chấm điểm VMD' (list)
+Logo                                → 'Trang Chủ'
+Avatar                              → 'Hồ sơ cá nhân'
+Đăng xuất                          → Login
+Variables
+Variable
+Mục đích
+usern
+Tên user — pre-fill txt_ucheck
+userimg
+Ảnh đại diện
+Boxprofile
+Hiện/ẩn popup profile
+Vấn đề cần lưu ý khi rebuild
+Không set varItem sau Patch — sau khi tạo record xong, navigate về list nhưng không set varItem = record vừa tạo. User phải tìm và click record mới trong list để tiếp tục → UX kém. Nên dùng Set(varItem, Patch(...)) để capture kết quả, rồi navigate thẳng vào detail screen.
+Không có error handling — Patch() không có IfError(). Nếu ghi thất bại, user không biết. Nên thêm:
+powerfx
+   If(IsError(Patch(...)), Notify("Lỗi lưu dữ liệu", NotificationType.Error))
+Không validate — có thể submit với dropdown ở giá trị mặc định (blank/empty). Nên disable btn_insert_1 khi dd_department.Selected.Value = Blank().
+Distinct() trên cascading dropdown — nếu THÔNG TIN QUẦY HÀNG VMD lớn, Distinct không delegate. Với bảng config nhỏ thì ổn, nhưng cần document rõ giới hạn này.
+Bảng THÔNG TIN QUẦY HÀNG VMD — đây là bảng master data quan trọng. Khi rebuild cần đảm bảo dữ liệu đồng bộ với logic filter ở screen 'Chấm điểm VMD' (19 nhánh If hardcode tên Quầy hàng).
+Phân tích Screen: "Chấm điểm VMD Chỉnh sửa"
+Mục đích
+Edit/Scoring screen — vừa cập nhật thông tin cơ bản (Ngành hàng, Quầy hàng), vừa chấm kết quả từng khu vực (radio Đạt/Không đạt), tạo lỗi chi tiết cho từng zone, và gửi email thông báo.
+SharePoint Tables liên kết
+Table
+Thao tác
+Quan hệ
+Fields chính
+CHẤM ĐIỂM VMD
+WRITE (Patch)
+PK: ID
+Ngành hàng, Quầy hàng, Khu vực kiểm tra [VP/Bàn/Cột/Gondola/Sào/Vách]
+THÔNG TIN QUẦY HÀNG VMD
+READ
+Config
+Ngành hàng, Quầy hàng
+Lỗi trưng bày của VP (Cụm MNC chính)
+READ
+FK: Ref ID
+Lỗi trưng bày của VP, Hình ảnh của VP, Hình ảnh sửa lỗi
+Lỗi trưng bày của bàn
+READ
+FK: Ref ID
+Lỗi trưng bày của Bàn, Hình ảnh của Bàn, Hình ảnh sửa lỗi
+Lỗi trưng bày của Cột
+READ
+FK: Ref ID
+Lỗi trưng bày của Cột, Hình ảnh của Cột, Hình ảnh sửa lỗi
+Lỗi trưng bày của Gondola
+READ
+FK: Ref ID
+Lỗi trưng bày của Gondola, Hình ảnh của Gondola, Hình ảnh sửa lỗi
+Lỗi trưng bày của Sào
+READ
+FK: Ref ID
+Lỗi trưng bày của Sào, Hình của Sào, Hình ảnh sửa lỗi
+Lỗi trưng bày của Vách
+READ
+FK: Ref ID
+Lỗi trưng bày của Vách, Hình của Vách, Hình ảnh sửa lỗi
+⚠️ Naming inconsistency: VP/Bàn/Cột/Gondola dùng Hình ảnh của..., còn Sào/Vách dùng Hình của... (thiếu "ảnh").
+Form Fields
+Control
+Field SP
+Default
+Permission
+txt_ucheck_1
+Người kiểm tra
+varItem.'Người kiểm tra'
+Disabled (always)
+dd_department_1
+Ngành hàng
+varItem.'Ngành hàng'
+Disabled nếu userrolevalue="Staff SPA"
+dd_position_1
+Quầy hàng
+varItem.'Quầy hàng'
+Disabled nếu userrolevalue="Staff SPA"
+rdo_VP
+Khu vực kiểm tra VP
+varItem.'Khu vực kiểm tra VP'
+—
+rdo_Bàn
+Khu vực kiểm tra Bàn
+varItem.'Khu vực kiểm tra Bàn'
+—
+rdo_Cột
+Khu vực kiểm tra Cột
+varItem.'Khu vực kiểm tra Cột'
+—
+rdo_Gon
+Khu vực kiểm tra Gondola
+varItem.'Khu vực kiểm tra Gondola'
+—
+rdo_Pole
+Khu vực kiểm tra Sào
+varItem.'Khu vực kiểm tra Sào'
+—
+rdo_Pole_1
+Khu vực kiểm tra Vách
+varItem.'Khu vực kiểm tra Vách'
+—
+Default trong code là URL-encoded Vietnamese (e.g., Khuv_x01b0__x0323_cki_x00ea__x03) — PowerApps internal encoding cho tên cột tiếng Việt.
+Các Zone & Navigation "Tạo lỗi"
+Zone
+Radio
+Gallery source
+"Tạo lỗi" → Screen
+Form
+VP
+rdo_VP
+Lỗi trưng bày của VP (Cụm MNC chính)
+VP (Cụm MNC chính) Thêm mới
+Form7
+Bàn
+rdo_Bàn
+Lỗi trưng bày của bàn
+Bàn Thêm mới
+Form8
+Cột
+rdo_Cột
+Lỗi trưng bày của Cột
+Cột Thêm mới
+Form9
+Gondola
+rdo_Gon
+Lỗi trưng bày của Gondola
+Gondola Thêm mới
+Form10
+Sào
+rdo_Pole
+Lỗi trưng bày của Sào
+Sào Thêm mới
+Form11
+Vách
+rdo_Pole_1
+Lỗi trưng bày của Vách
+Vách Thêm mới
+Form12
+Save Logic (btn_edit_1 — "Cập nhật")
+powerfx
+Patch(
+    'CHẤM ĐIỂM VMD',
+    If(IsBlank(varItem), Defaults('CHẤM ĐIỂM VMD'), varItem),  // create or update
+    {
+        'Ngành hàng': dd_department_1.Selected.Value,
+        'Quầy hàng': dd_position_1.Selected.Value,
+        'Khu vực kiểm tra VP': rdo_VP.Selected.Value,
+        'Khu vực kiểm tra Bàn': rdo_Bàn.Selected.Value,
+        'Khu vực kiểm tra Cột': rdo_Cột.Selected.Value,
+        'Khu vực kiểm tra Gondola': rdo_Gon.Selected.Value,
+        'Khu vực kiểm tra Sào': rdo_Pole.Selected.Value,
+        'Khu vực kiểm tra Vách': rdo_Pole_1.Selected.Value
+    }
+);
+Navigate('Chấm điểm VMD Chi tiết', ScreenTransition.Cover)
+Screen này dual-mode: IsBlank(varItem) → tạo mới; ngược lại → update.
+Email Notification (btn_back_80 — "Gửi thông báo")
+Connector: Office365Outlook.SendEmailV2. Mapping email theo varItem.'Quầy hàng' (17 nhánh If):
+Quầy hàng
+Recipient
+Ladies
+lady.binhtan@aeon.com.vn
+Men
+men.binhtan@aeon.com.vn
+Inner
+inner.binhtan@aeon.com.vn
+Sport
+inner.binhtan@aeon.com.vn ⚠️
+SBA
+sba.binhtan@aeon.com.vn
+Kid SBA / Kid Fashion / Kid Baby / Kid Toy
+kid.binhtan@aeon.com.vn
+Household 2F / Household GF
+household.binhtan@aeon.com.vn
+Home Coordy
+homecoordy.binhtan@aeon.com.vn
+Home Fashion
+homefashion.binhtan@aeon.com.vn
+SHA / LHA
+electrical.binhtan@aeon.com.vn
+Multimedia / Stationery
+multimedia.binhtan@aeon.com.vn ⚠️
+Navigation map
+btn_edit_1 ("Cập nhật")       → 'Chấm điểm VMD Chi tiết'
+btn_back_5 ("Trở về")         → 'Chấm điểm VMD Chi tiết'
+btn_back_80 ("Gửi thông báo") → [gửi email, không navigate]
+btn_VP → 'VP (Cụm MNC chính) Thêm mới'
+btn_Bàn → 'Bàn Thêm mới'
+btn_Cột → 'Cột Thêm mới'
+btn_Gon → 'Gondola Thêm mới'
+btn_Pole → 'Sào Thêm mới'
+btn_Pole_1 → 'Vách Thêm mới'
+Logo → 'Trang Chủ'
+Avatar → 'Hồ sơ cá nhân'
+Vấn đề cần lưu ý khi rebuild
+Email hardcode trong app — 17 nhánh If với email cứng. Khi rebuild nên thêm cột Email thông báo vào THÔNG TIN QUẦY HÀNG VMD, sau đó LookUp ra email → 1 dòng thay 17 nhánh.
+Sport dùng email của Inner (inner.binhtan@) — nhiều khả năng là bug. Cần xác nhận với khách hàng.
+App URL hardcode trong email body — URL sẽ hỏng khi rebuild app mới. Nên lưu URL vào SharePoint config.
+btn_back_80 tên misleading — là "Gửi thông báo" nhưng tên control là btn_back_80. Cần đặt lại tên khi rebuild.
+btn_VP dùng cả ResetForm + NewForm, các zone khác chỉ dùng NewForm — inconsistent, có thể gây reset form không mong muốn.
+rdo_Pole / rdo_Pole_1 / gal_Pole_1 dùng cho Sào và Vách — naming misleading, khó maintain.
+Không có error handling trên cả Patch lẫn SendEmailV2.
+Tổng hợp tables mới phát hiện trong screen này (child tables của CHẤM ĐIỂM VMD, khác hoàn toàn với child tables của KIỂM TRA VMD):
+CHẤM ĐIỂM VMD (master)
+├── Lỗi trưng bày của VP (Cụm MNC chính)
+├── Lỗi trưng bày của bàn
+├── Lỗi trưng bày của Cột
+├── Lỗi trưng bày của Gondola
+├── Lỗi trưng bày của Sào
+└── Lỗi trưng bày của Vách
+Phân tích Screen: "Check VP"
+Mục đích
+Form tạo mới một lỗi VP trong luồng Kiểm tra VMD (khác với "Vách Thêm mới" thuộc luồng Chấm điểm VMD). Submit vào Kiểm tra VP rồi navigate về 'Kiểm tra VMD chỉnh sửa'.
+SharePoint Tables liên kết
+Table
+Thao tác
+Mục đích
+Kiểm tra VP
+WRITE (SubmitForm)
+Lưu lỗi VP mới
+Thông tin lỗi trưng bày của VP
+READ
+Catalog lỗi — source DataCardValue120 (Dropdown)
+Bảng mới phát hiện: Thông tin lỗi trưng bày của VP, field: Lỗi trưng bày của VP (Cụm MNC chính).
+Form13_1 — Fields & Data Mapping
+DataCard
+Field SP
+Visible
+Control
+Giá trị ghi
+Tên người kiểm tra
+Tên người kiểm tra
+✅
+TextInput
+user nhập
+Kiểm tra VP
+Kiểm tra VP
+✅
+DropDown từ Thông tin lỗi trưng bày của VP
+selected value
+Hình của VP
+Hình của VP
+✅
+AddMedia
+ảnh chụp
+Ngành hàng
+Ngành hàng
+❌ ẩn
+TextInput
+varItem.'Ngành hàng'
+Quầy hàng
+Quầy hàng
+❌ ẩn
+TextInput
+varItem.'Quầy hàng'
+Ref ID
+Ref ID
+❌ ẩn
+TextInput (Number)
+varItem.ID
+Ghi chú
+Ghi chú
+✅
+TextInput
+user nhập
+Tháng
+Tháng
+❌ ẩn
+TextInput
+"Tháng XX" từ Month(Now())
+Navigation map
+btn_insert_53 ("Tạo lỗi")  → SubmitForm(Form13_1) → 'Kiểm tra VMD chỉnh sửa'
+btn_back_49 ("Trở về")     → 'Kiểm tra VMD chỉnh sửa'
+Logo                        → 'Trang Chủ'
+Avatar                      → 'Hồ sơ cá nhân'
+Phát hiện quan trọng: 2 hệ thống song song
+Screen này xác nhận rõ app có hai luồng kiểm tra hoàn toàn tách biệt, cùng cấu trúc nhưng khác bảng dữ liệu:
+Luồng
+Master table
+Child tables
+Catalog tables
+KIỂM TRA VMD
+KIỂM TRA VMD
+Kiểm tra VP/Bàn/Cột/Gondola/Sào/Vách
+Thông tin lỗi trưng bày của [Zone]
+CHẤM ĐIỂM VMD
+CHẤM ĐIỂM VMD
+Lỗi trưng bày của VP(Cụm MNC...)/bàn/Cột/Gondola/Sào/Vách
+Thông tin lỗi [Zone]
+Khác biệt chính giữa 2 luồng:
+Kiểm tra VMD: có field Tên người kiểm tra trong child table, không có field điểm số
+Chấm điểm VMD: không có Tên người kiểm tra trong child table, có field Điểm của [Zone] với scoring logic phức tạp
+Schema đầy đủ của Kiểm tra VP (confirmed)
+Field
+Kiểu
+Tên người kiểm tra
+Text
+Kiểm tra VP
+Text (từ catalog)
+Hình của VP
+Image
+Ngành hàng
+Text
+Quầy hàng
+Text
+Ref ID
+Number (FK)
+Ghi chú
+Text
+Tháng
+Text
+Tổng hợp catalog tables (đã xác nhận + suy luận)
+Zone
+Kiểm tra VMD catalog
+Chấm điểm VMD catalog
+VP
+Thông tin lỗi trưng bày của VP ✓
+(từ screen Chỉnh sửa — chưa confirm tên)
+Bàn
+Thông tin lỗi trưng bày của Bàn *
+—
+Cột
+Thông tin lỗi trưng bày của Cột *
+—
+Gondola
+Thông tin lỗi trưng bày của Gondola *
+—
+Sào
+Thông tin lỗi trưng bày của Sào *
+—
+Vách
+Thông tin lỗi trưng bày của Vách *
+Thông tin lỗi Vách ✓
+Phân tích Screen: "Check VP chi tiết"
+Mục đích
+Detail/View screen cho một lỗi VP cụ thể trong luồng Kiểm tra VMD. Load record qua LookUp('Kiểm tra VP', ID = itemId), hiển thị read-only. User có thể Edit, Xóa, hoặc Trở về.
+SharePoint Table & Item binding
+powerfx
+DataSource: 'Kiểm tra VP'
+Item: LookUp('Kiểm tra VP', ID = itemId)
+Form13_2 — Fields hiển thị
+DataCard
+Field
+Visible
+Mode
+Ghi chú
+Đã tạo
+Created
+✅
+View (locked)
+Ngày tạo record
+Tên người kiểm tra
+Tên người kiểm tra
+✅
+View
+—
+Kiểm tra VP
+Kiểm tra VP
+✅
+View, multiline
+Mô tả lỗi
+Quầy hàng
+Quầy hàng
+✅
+View
+—
+Hình của VP
+Hình của VP
+✅
+View
+Click → 'Hình ảnh'
+Ngành hàng
+Ngành hàng
+❌ ẩn
+—
+—
+Ref ID
+Ref ID
+❌ ẩn
+—
+—
+Ghi chú
+Ghi chú
+✅
+View
+—
+Tên người phản hồi
+Tên người phản hồi
+✅
+View
+⭐ Field mới
+Hình sửa lỗi
+Hình sửa lỗi
+✅
+View
+⭐ Field mới — Click → 'Hình ảnh'
+Phản hồi thông tin
+Phản hồi thông tin
+✅
+View
+⭐ Field mới
+Phát hiện quan trọng: Workflow 2 chiều
+Screen này lần đầu tiên tiết lộ luồng phản hồi (feedback loop) trong Kiểm tra VP:
+Inspector tạo lỗi          Counter manager phản hồi
+──────────────────    →    ──────────────────────────
+Tên người kiểm tra         Tên người phản hồi
+Kiểm tra VP (mô tả)        Phản hồi thông tin
+Hình của VP                Hình sửa lỗi
+Ghi chú
+Pattern này suy luận áp dụng cho toàn bộ child tables của Kiểm tra VMD (Bàn, Cột, Gondola, Sào, Vách).
+Buttons & Permission
+Button
+Action
+Disabled khi
+Chỉnh sửa
+Navigate → 'Check VP chỉnh sửa'
+permission="Test" OR usernh="FOODLINE 1/2"
+Xóa
+Remove('Kiểm tra VP', LookUp(...ID=itemId)) → 'Kiểm tra VMD chỉnh sửa'
+Same
+Trở về
+Routing theo role (xem bên dưới)
+—
+Trở về — role-based routing:
+powerfx
+If(
+    permission="SPA" || usernh="SOFTLINE" || usernh="HARDLINE",
+    Navigate('Kiểm tra VMD chỉnh sửa'),
+    usernh="FOODLINE 1" || usernh="FOODLINE 2" || permission="Test",
+    Navigate('Kiểm tra VMD chi tiết')
+)
+→ SPA/Softline/Hardline có thể quay về màn hình edit; FOODLINE và Test chỉ xem được detail.
+Screens mới phát hiện
+'Check VP chỉnh sửa' — form edit VP error (dành cho counter manager phản hồi)
+'Hình ảnh' — screen xem ảnh full-size (dùng biến img)
+Schema đầy đủ Kiểm tra VP (confirmed)
+Field
+Kiểu
+Ghi chú
+ID
+Number
+PK
+Created
+DateTime
+Auto
+Tên người kiểm tra
+Text
+Inspector
+Kiểm tra VP
+Text
+Mô tả lỗi (từ catalog)
+Hình của VP
+Image
+Ảnh lỗi
+Quầy hàng
+Text
+—
+Ngành hàng
+Text
+—
+Ref ID
+Number
+FK → KIỂM TRA VMD.ID
+Ghi chú
+Text
+—
+Tháng
+Text
+—
+Tên người phản hồi
+Text
+Counter manager
+Hình sửa lỗi
+Image
+Ảnh sau sửa lỗi
+Phản hồi thông tin
+Text
+Nội dung phản hồi
+Vấn đề cần lưu ý khi rebuild
+Bug: cả 2 ảnh đều set img = itemIMG — Image30_1 (Hình của VP) và Image31 (Hình sửa lỗi) đều gọi Set(img, itemIMG). Image31 lẽ ra phải set img = itemIMG2. User có thể xem nhầm ảnh.
+Xóa không có confirm dialog — btn_insert_55 xóa ngay lập tức, không hỏi xác nhận.
+Trở về không xử lý trường hợp role không khớp — nếu usernh không thuộc nhóm nào trong If-chain, button không làm gì cả (silent fail).
+Feedback fields không có trong "Check VP" (Add screen) — user tạo lỗi không điền Tên người phản hồi / Phản hồi thông tin. Những fields này được điền ở 'Check VP chỉnh sửa' — cần confirm khi upload screen đó.
+Phân tích Screen: "Check VP chỉnh sửa"
+Mục đích
+Edit form cho bản ghi kiểm tra VP (Visual Presentation). Cho phép cập nhật kết quả kiểm tra, ảnh, ghi chú và thông tin phản hồi sửa lỗi.
+Tables kết nối
+Table
+Vai trò
+Kiểm tra VP
+DataSource chính của Form — đọc & ghi
+Thông tin lỗi trưng bày của VP
+Lookup cho dropdown "Kiểm tra VP" (field: Lỗi trưng bày của VP (Cụm MNC chính))
+Item load: LookUp('Kiểm tra VP', ID = itemId) — biến itemId truyền từ màn hình trước.
+Fields trong Form
+DataCard
+Column (encoded)
+Kiểu
+Hiển thị
+Ghi chú
+Kiểm tra VP
+Ki_x00ea__x0309_mtraVP
+Dropdown
+✅
+Items lấy từ Thông tin lỗi trưng bày của VP
+Hình của VP
+Hi_x0300_nhcu_x0309_aVP
+Image + AddMedia
+✅
+Upload ảnh VP
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Text
+❌ Hidden
+Default từ varItem — tự điền
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Text
+❌ Hidden
+Default từ varItem — tự điền
+Ref ID
+RefID
+Number
+❌ Hidden
+Default từ varItem.ID
+Ghi chú
+Ghichu_x0301_
+Text
+✅
+Free text
+Tên người phản hồi
+T_x00ea_nng_x01b0__x1edd_iph_x1e
+Text
+✅
+Người phản hồi sửa lỗi
+Hình sửa lỗi
+Hi_x0300_nhs_x01b0__x0309_al_x00
+Image + AddMedia
+✅
+Upload ảnh sau sửa
+Phản hồi thông tin
+Pha_x0309_nh_x00f4__x0300_ith_x0
+Text
+✅
+Nội dung phản hồi
+RBAC — Phân quyền chỉnh sửa
+Field
+Staff SPA
+permission = "Ngành hàng"
+Others
+Dropdown "Kiểm tra VP"
+Disabled
+Disabled
+Edit
+Upload "Hình của VP"
+Disabled
+Disabled
+Edit
+Upload "Hình sửa lỗi"
+Disabled
+Edit
+Edit
+"Phản hồi thông tin"
+Disabled
+Edit
+Edit
+"Ghi chú", "Tên người phản hồi"
+—
+—
+Edit (không restrict)
+→ Staff SPA: chỉ xem, không sửa được gì.→ Ngành hàng: chỉ sửa được phần phản hồi (ảnh sửa lỗi + text phản hồi).→ Roles khác: full edit.
+Luồng nghiệp vụ
+Vào màn hình (itemId set sẵn)
+  → Form load item từ 'Kiểm tra VP' bằng LookUp(ID=itemId)
+  → varItem cung cấp default cho các hidden fields
+User chỉnh sửa (theo quyền)
+  → [Cập nhật] → SubmitForm(Form13_3) → Navigate('Check VP chi tiết')
+  → [Trở về]   → Navigate('Check VP chi tiết') (không lưu)
+Biến phụ thuộc
+Biến
+Kiểu
+Dùng cho
+itemId
+Number
+LookUp ID bản ghi cần edit
+varItem
+Record
+Default cho Ngành hàng, Quầy hàng, Ref ID (hidden)
+userrolevalue
+Text
+Kiểm tra role "Staff SPA"
+permission
+Text
+Kiểm tra permission "Ngành hàng"
+Thought process
+Thought process
+Phân tích Screen: "Chấm điểm VMD"
+Mục đích
+Màn hình danh sách (list view) các bản ghi chấm điểm VMD. Cho phép lọc theo ngày, sắp xếp, xem chi tiết, và thêm mới.
+Table kết nối
+Table
+Vai trò
+CHẤM ĐIỂM VMD
+DataSource chính của Gallery2 — chỉ đọc
+Logic lọc Gallery — Role-based filtering
+Gallery dùng AddColumns('CHẤM ĐIỂM VMD', sortID, ID) rồi Filter + SortByColumns. Mỗi role được lọc theo Quầy hàng hoặc Ngành hàng:
+userrolevalue
+Filter điều kiện
+GL Ladies
+Quầy hàng = "Ladies"
+GL Men
+Quầy hàng = "Men"
+GL Inner
+Quầy hàng = "Inner"
+GL Sport
+Quầy hàng = "Sport"
+GL SBA
+Quầy hàng = "SBA (Shoes/Bag/ Acc)"
+GL Kid SBA
+Quầy hàng = "Kid SBA"
+GL Kid Fashion
+Quầy hàng = "Kid Fashion"
+GL Kid Baby
+Quầy hàng = "Kid Baby"
+GL Kid Toy
+Quầy hàng = "Kid Toy"
+GL House2F
+Quầy hàng = "Household 2F"
+GL HouseGF
+Quầy hàng = "Household GF"
+GL HCoordy
+Quầy hàng = "Home Coordy"
+GL HFashion
+Quầy hàng = "Home Fashion"
+GL SHA
+Quầy hàng = "SHA"
+GL LHA
+Quầy hàng = "LHA"
+GL Multi
+Quầy hàng = "Multimedia"
+GL Station
+Quầy hàng = "Stationery"
+permission="SPA" hoặc "Test"
+Không filter Quầy hàng — xem toàn bộ
+softline
+Ngành hàng = "SOFTLINE"
+hardline
+Ngành hàng = "HARDLINE"
+Date range filter (áp dụng tất cả roles):
+Điều kiện: Từ ngày (dpEndDate_2) <= Created <= Đến ngày (dpStartDate_2)
+Lưu ý tên biến bị đặt ngược (StartDate ↔ EndDate) nhưng logic đúng nhờ placeholder "Từ ngày"/"Đến ngày"
+⚠️ Bug phát hiện
+softline và hardline dùng date picker khác (dpEndDate / dpStartDate, không có _2) — trong khi màn hình này chỉ có dpStartDate_2 và dpEndDate_2. Hậu quả:
+Filter ngày cho softline/hardline không hoạt động (picker không tồn tại trên screen này).
+Nút "Hủy" (Reset(dpStartDate_2); Reset(dpEndDate_2)) cũng không reset được filter của softline/hardline.
+Gallery hiển thị
+Label
+Field
+Subtitle2
+Ngành hàng
+Title4
+Quầy hàng
+Subtitle2_1
+Created (italic)
+OnSelect: Set(varItem, ThisItem) → Navigate('Chấm điểm VMD Chi tiết')
+Buttons & Controls
+Control
+Hành động
+Hạn chế
+"Thêm mới"
+Navigate('Chấm điểm VMD Thêm mới') + Set(varItem, Blank())
+Disabled nếu permission = "Ngành hàng" hoặc "Test"
+"Trở về"
+Navigate('Công việc hàng ngày')
+—
+"Hủy"
+Reset(dpStartDate_2); Reset(dpEndDate_2)
+—
+icSort_3
+Toggle sortDirection Asc/Desc, set sortColumn = "sortID"
+—
+Logo
+Navigate('Trang Chủ')
+—
+Avatar
+Navigate('Hồ sơ cá nhân')
+—
+Profile Popup (Boxprofile)
+Hiện/ẩn theo biến Boxprofile. Chứa: avatar (User().Image), email (User().Email), tên (usern), nút "Đăng xuất" → Navigate(Login), nút đóng → Set(Boxprofile, false).
+Biến phụ thuộc
+Biến
+Mục đích
+userrolevalue
+Xác định role để filter gallery
+permission
+Disable nút "Thêm mới"
+varItem
+Truyền item sang màn chi tiết
+sortColumn
+Tên cột sort (="sortID")
+sortDirection
+Asc / Desc
+Boxprofile
+Toggle profile popup
+usern
+Tên user hiển thị
+userimg
+Ảnh user (header)
+Thought process
+Thought process
+Phân tích Screen: "Chấm điểm VMD Thêm mới"
+Mục đích
+Form tạo mới bản ghi chấm điểm VMD. Người dùng chọn Ngành hàng → Quầy hàng → bắt đầu kiểm tra.
+Tables kết nối
+Table
+Vai trò
+CHẤM ĐIỂM VMD
+Ghi dữ liệu mới bằng Patch
+THÔNG TIN QUẦY HÀNG VMD
+Lookup dữ liệu cho 2 dropdown (Ngành hàng, Quầy hàng)
+Fields nhập liệu
+Control
+Label
+Nguồn dữ liệu
+Ghi chú
+txt_ucheck
+Người kiểm tra
+usern (biến)
+Disabled — tự điền, không sửa được
+dd_department
+Ngành hàng
+Distinct('THÔNG TIN QUẦY HÀNG VMD', 'Ngành hàng')
+Dropdown
+dd_position
+Quầy hàng
+Distinct(Filter('THÔNG TIN QUẦY HÀNG VMD', 'Ngành hàng' = dd_department.Selected.Value), 'Quầy hàng')
+Dropdown cascade — phụ thuộc vào chọn Ngành hàng
+Cascade logic: dd_position tự lọc theo giá trị đang chọn của dd_department.
+Patch khi "Bắt đầu kiểm tra"
+Patch('CHẤM ĐIỂM VMD', Defaults('CHẤM ĐIỂM VMD'), {
+    'Người kiểm tra': txt_ucheck.Text,   -- từ usern
+    'Ngành hàng':     dd_department.Selected.Value,
+    'Quầy hàng':      dd_position.Selected.Value
+})
+→ Navigate('Chấm điểm VMD', ScreenTransition.Cover)
+Chỉ tạo record với 3 fields ban đầu. Các trường chấm điểm chi tiết sẽ được điền ở màn hình tiếp theo.
+Buttons
+Button
+Hành động
+"Bắt đầu kiểm tra"
+Patch → Navigate('Chấm điểm VMD')
+"Trở về"
+Navigate('Chấm điểm VMD') — không lưu
+Biến phụ thuộc
+Biến
+Mục đích
+usern
+Tên người kiểm tra (auto-fill, read-only)
+userimg
+Ảnh avatar header
+Boxprofile
+Toggle profile popup
+Thought process
+Thought process
+Phân tích Screen: "Chấm điểm VMD Chi tiết"
+Mục đích
+Màn hình xem chi tiết 1 bản ghi chấm điểm VMD. Hiển thị kết quả kiểm tra theo từng khu vực trưng bày, danh sách lỗi kèm ảnh, và các action (Chỉnh sửa / Xóa / Trở về).
+Tables kết nối
+Table
+Vai trò
+CHẤM ĐIỂM VMD
+Source chính — đọc thông tin header + kết quả khu vực
+Lỗi trưng bày của VP (Cụm MNC chính)
+Gallery lỗi VP, xóa cascade
+Lỗi trưng bày của bàn
+Gallery lỗi Bàn, xóa cascade
+Lỗi trưng bày của Cột
+Gallery lỗi Cột, xóa cascade
+Lỗi trưng bày của Gondola
+Gallery lỗi Gondola, xóa cascade
+Lỗi trưng bày của Sào
+Gallery lỗi Sào, xóa cascade
+Lỗi trưng bày của Vách
+Gallery lỗi Vách, xóa cascade
+Tất cả đọc bằng LookUp('CHẤM ĐIỂM VMD', ID = varItem.ID) — không dùng Form.
+Cấu trúc 6 khu vực kiểm tra
+Mỗi khu vực có cùng pattern:
+Element
+Nội dung
+Label kết quả
+LookUp(...).'Khu vực kiểm tra X' — màu xanh nếu = "Đạt", đỏ nếu khác
+Label tổng lỗi
+Static header
+Gallery lỗi
+Filter('Lỗi trưng bày của X', 'Ref ID' = varItem.ID)
+Khu vực
+Table lỗi
+Field lỗi
+Ảnh
+Navigate đến
+VP (Cụm MNC chính)
+Lỗi trưng bày của VP (Cụm MNC chính)
+Lỗi trưng bày của VP
+Hình ảnh của VP
+VP (Cụm MNC chính) Chi tiết
+Bàn
+Lỗi trưng bày của bàn
+Lỗi trưng bày của Bàn
+Hình ảnh của Bàn
+Bàn Chi tiết
+Cột
+Lỗi trưng bày của Cột
+Lỗi trưng bày của Cột
+Hình ảnh của Cột
+Cột Chi tiết
+Gondola
+Lỗi trưng bày của Gondola
+Lỗi trưng bày của Gondola
+Hình ảnh của Gondola
+Gondola Chi tiết
+Sào
+Lỗi trưng bày của Sào
+Lỗi trưng bày của Sào
+Hình của Sào
+Sào Chi tiết
+Vách
+Lỗi trưng bày của Vách
+Lỗi trưng bày của Vách
+Hình của Vách
+Vách Chi tiết
+OnSelect gallery: Set(itemId, itemIMG, itemIMG2) → Navigate chi tiết khu vực.
+Buttons & RBAC
+Button
+Hành động
+Hạn chế
+"Chỉnh sửa"
+Navigate('Chấm điểm VMD Chỉnh sửa')
+Disabled: permission = "Ngành hàng" hoặc "Test"
+"Xóa"
+Cascade delete 7 tables → Navigate('Chấm điểm VMD')
+Disabled: permission = "Ngành hàng" hoặc "Test"
+"Trở về"
+Navigate('Chấm điểm VMD')
+—
+⚠️ Bug nghiêm trọng — Cascade Delete
+Remove('Lỗi trưng bày của VP (Cụm MNC chính)', 
+    LookUp('Lỗi trưng bày của VP (Cụm MNC chính)', 'Ref ID'=varItem.ID))
+Remove + LookUp chỉ xóa 1 record đầu tiên tìm thấy. Nếu 1 bản ghi VMD có nhiều lỗi trong bảng con, các lỗi còn lại sẽ không bị xóa (orphaned records).
+Fix: Phải dùng RemoveIf('Lỗi trưng bày của VP (Cụm MNC chính)', 'Ref ID' = varItem.ID) cho tất cả 6 bảng con.
+Biến phụ thuộc
+Biến
+Mục đích
+varItem
+Record được chọn từ màn list (chứa .ID)
+itemId
+ID của lỗi con khi chọn trong gallery
+itemIMG
+Ảnh lỗi (ảnh gốc)
+itemIMG2
+Ảnh sửa lỗi
+permission
+Kiểm soát quyền Edit/Delete
+Boxprofile
+Toggle profile popup
+Thought process
+Thought process
+Phân tích Screen: "Chấm điểm VMD Chỉnh sửa"
+Mục đích
+Edit screen cho bản ghi chấm điểm VMD. Cho phép cập nhật Ngành hàng, Quầy hàng, kết quả 6 khu vực kiểm tra, tạo lỗi mới cho từng khu vực, và gửi email thông báo cho GL.
+Tables kết nối
+Table
+Vai trò
+CHẤM ĐIỂM VMD
+Patch cập nhật record chính
+THÔNG TIN QUẦY HÀNG VMD
+Lookup cho 2 dropdown (Ngành hàng → Quầy hàng cascade)
+Lỗi trưng bày của VP (Cụm MNC chính)
+Gallery hiển thị + navigate tạo lỗi
+Lỗi trưng bày của bàn
+Gallery hiển thị + navigate tạo lỗi
+Lỗi trưng bày của Cột
+Gallery hiển thị + navigate tạo lỗi
+Lỗi trưng bày của Gondola
+Gallery hiển thị + navigate tạo lỗi
+Lỗi trưng bày của Sào
+Gallery hiển thị + navigate tạo lỗi
+Lỗi trưng bày của Vách
+Gallery hiển thị + navigate tạo lỗi
+Patch khi "Cập nhật"
+Patch('CHẤM ĐIỂM VMD',
+    If(IsBlank(varItem), Defaults('CHẤM ĐIỂM VMD'), varItem),
+    {
+        'Ngành hàng':              dd_department_1.Selected.Value,
+        'Quầy hàng':               dd_position_1.Selected.Value,
+        'Khu vực kiểm tra VP':     rdo_VP.Selected.Value,
+        'Khu vực kiểm tra Bàn':    rdo_Bàn.Selected.Value,
+        'Khu vực kiểm tra Cột':    rdo_Cột.Selected.Value,
+        'Khu vực kiểm tra Gondola':rdo_Gon.Selected.Value,
+        'Khu vực kiểm tra Sào':    rdo_Pole.Selected.Value,
+        'Khu vực kiểm tra Vách':   rdo_Pole_1.Selected.Value
+    }
+)
+→ Navigate('Chấm điểm VMD Chi tiết')
+Radio options cho tất cả khu vực: ["Đạt", "Không đạt"]
+Cấu trúc 6 khu vực
+Khu vực
+Radio default field
+"Tạo lỗi" → Screen
+Form reset
+VP
+varItem.Khuv...cki_x00ea__x03
+'VP (Cụm MNC chính) Thêm mới'
+ResetForm(Form7) + NewForm(Form7)
+Bàn
+varItem.Khuv_x1ef1_cki_x1ec3_m...
+'Bàn Thêm mới'
+NewForm(Form8)
+Cột
+varItem.Khuv...cki_x00ea__x030
+'Cột Thêm mới'
+NewForm(Form9)
+Gondola
+varItem.Khuv...cki_x00ea__x031
+'Gondola Thêm mới'
+NewForm(Form10)
+Sào
+varItem.Khuv...cki_x00ea__x032
+'Sào Thêm mới'
+NewForm(Form11)
+Vách
+varItem.Khuv...cki_x00ea__x033
+'Vách Thêm mới'
+NewForm(Form12)
+Email Notification — "Gửi thông báo" (btn_back_80)
+Office365Outlook.SendEmailV2 gửi theo varItem.Quầy hàng:
+Quầy hàng
+To
+Ladies
+lady.binhtan@aeon.com.vn
+Men
+men.binhtan@aeon.com.vn
+Inner
+inner.binhtan@aeon.com.vn
+Sport
+inner.binhtan@aeon.com.vn
+SBA
+sba.binhtan@aeon.com.vn
+Kid SBA / Fashion / Baby / Toy
+kid.binhtan@aeon.com.vn
+Household 2F / GF
+household.binhtan@aeon.com.vn
+Home Coordy
+homecoordy.binhtan@aeon.com.vn
+Home Fashion
+homefashion.binhtan@aeon.com.vn
+SHA / LHA
+electrical.binhtan@aeon.com.vn
+Multimedia / Stationery
+multimedia.binhtan@aeon.com.vn
+Subject cố định: "THÔNG BÁO LỖI TRƯNG BÀY POP/POS MỚI". Sau khi gửi: Notify("Bạn đã gửi thông báo cho Ngành hàng", Success).
+RBAC
+Control
+Bị Disabled khi
+dd_department_1 (Ngành hàng)
+userrolevalue = "Staff SPA"
+dd_position_1 (Quầy hàng)
+userrolevalue = "Staff SPA"
+⚠️ Bugs phát hiện
+1. Naming sai: btn_back_80 đặt tên "back" nhưng Text = "Gửi thông báo" — dễ nhầm khi maintain.
+2. Email trùng:
+Sport → gửi về inner.binhtan (cùng với Inner) — có thể là bug
+Stationery → gửi về multimedia.binhtan (cùng với Multimedia) — có thể là bug
+3. Naming không nhất quán: rdo_Pole_1 là radio của khu vực Vách (không phải Sào) — dễ gây nhầm.
+4. VP dùng ResetForm + NewForm, các khu vực còn lại chỉ dùng NewForm — không nhất quán.
+5. Dual-mode Patch: If(IsBlank(varItem), Defaults(...), varItem) — cho phép tạo mới nếu varItem blank, nhưng screen này tên "Chỉnh sửa", không phải "Thêm mới".
+Thought process
+Thought process
+Phân tích Screen: "VP (Cụm MNC chính) Thêm mới"
+Mục đích
+Form tạo mới 1 lỗi trưng bày cho khu vực VP (Cụm MNC chính), gắn vào bản ghi chấm điểm VMD qua Ref ID = varItem.ID. Tự động tính điểm phạt dựa theo loại lỗi và Quầy hàng.
+Table kết nối
+Table
+Vai trò
+Lỗi trưng bày của VP (Cụm MNC chính)
+DataSource của Form7 — ghi record mới
+Thông tin lỗi trưng bày của VP
+Lookup cho dropdown "Lỗi trưng bày của VP (Cụm MNC chính)"
+Form7 — Fields
+DataCard
+Column
+Hiện
+Nguồn / Ghi chú
+Lỗi trưng bày của VP
+L_x00f4__x0303_itr_x01b0_ngba_x0
+✅
+Dropdown từ Thông tin lỗi trưng bày của VP
+Điểm của VP
+OData__x0110_i_x00ea__x0309_mcu_x0309_
+✅
+Auto-calculated (xem bên dưới)
+Hình ảnh của VP
+Hi_x0300_nha_x0309_nhcu_x0309_aV
+✅
+AddMedia upload
+Ghi chú
+Ghichu_x0301_
+✅
+Free text
+Ref ID
+RefID
+❌ Hidden
+varItem.ID — liên kết với record chấm điểm
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+❌ Hidden
+varItem.Ngành hàng
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+❌ Hidden
+varItem.Quầy hàng
+Tháng
+Tha_x0301_ng
+❌ Hidden
+"Tháng " + Month(Now()) dạng text ("Tháng 01"…"Tháng 12")
+Logic tính "Điểm của VP" (auto-calc)
+Điểm chỉ áp dụng khi lần đầu xuất hiện loại lỗi đó cho Ref ID hiện tại (CountRows(Filter(...)) = 0). Nếu lỗi đã tồn tại → default 6.
+Loại lỗi
+Quầy hàng
+Điểm
+Bục MNC, Rác/bụi, MNC sai/vỡ, Sản phẩm không ủi, Không giấu sensor
+Ladies / Men / Inner / Sport / Kid Fashion / Kid Baby
+5
+Bục MNC, Rác/bụi, MNC sai/vỡ, Sản phẩm không ủi, Không giấu sensor
+SBA / Kid SBA / Kid Toy
+6
+Phối đồ sai color theme
+Ladies / Men / Inner / Sport / Kid Fashion / Kid Baby
+7
+Phối đồ sai color theme
+SBA / Kid SBA / Kid Toy
+8
+Sản phẩm không thuộc chung quầy / Sai phụ kiện SBA
+Tất cả 9 quầy trên
+6
+Mặc định
+—
+6
+Điểm tính client-side, user có thể sửa tay trước khi Submit.
+Submit
+SubmitForm(Form7) → Navigate('Chấm điểm VMD Chỉnh sửa')
+⚠️ Bug phát hiện
+GalGroup_22 (profile popup gallery) có Items = 'Lỗi trưng bày của VP (Cụm MNC chính)' — sai datasource, nên để trống. Không ảnh hưởng chức năng (gallery chỉ hiện avatar/email/tên từ child controls cố định) nhưng gây load dữ liệu thừa mỗi khi mở popup.
+Phân tích Screen: "VP (Cụm MNC chính) Chi tiết"
+Mục đích
+Màn hình xem chi tiết 1 record lỗi VP. Toàn bộ Form ở View mode (read-only). Cho phép xóa record hoặc đi sang màn hình chỉnh sửa.
+Table kết nối
+Table
+Vai trò
+Lỗi trưng bày của VP (Cụm MNC chính)
+DataSource Form1 — LookUp(ID = itemId)
+Form1 — Fields hiển thị
+DataCard
+Column
+Kiểu
+Ghi chú
+Đã tạo
+Created
+View label
+Ngày tạo
+Lỗi trưng bày của VP
+L_x00f4__x0303_...
+TextInput View multiline
+Nội dung lỗi
+Điểm của VP
+OData__x0110_...
+TextInput View
+Hiển thị "−" & value nếu không blank (prefix dấu trừ)
+Quầy hàng
+Qu_x00e2__x0300_...
+View label
+Hình ảnh của VP
+Hi_x0300_nha_x0309_nhcu_x0309_aV
+Image
+Click → Set(img, itemIMG) → Navigate('Hình ảnh')
+Ghi chú
+Ghichu_x0301_
+TextInput View
+Hình ảnh sửa lỗi
+Hi_x0300_nha_x0309_nhs_x01b0__x0
+Image
+Click → Set(img, itemIMG2) → Navigate('Hình ảnh')
+Phản hồi thông tin
+Pha_x0309_nh_x00f4__x0300_ith_x0
+TextInput View
+Tất cả TextInput đều force DisplayMode.View — không edit được dù Form ở Edit mode.
+Buttons & RBAC
+Button
+Hành động
+Hạn chế
+"Chỉnh sửa"
+Navigate('VP (Cụm MNC chính) Chỉnh sửa')
+Disabled: permission = "Test"
+"Xóa"
+Remove(LookUp(ID=itemId)) → Navigate('Chấm điểm VMD Chỉnh sửa')
+Disabled: "Ngành hàng" hoặc "Test"
+"Trở về"
+Navigate theo permission (xem bên dưới)
+—
+"Trở về" — điều hướng theo permission:
+SPA               → 'Chấm điểm VMD Chỉnh sửa'
+Ngành hàng / Test → 'Chấm điểm VMD Chi tiết'
+Không có fallback nếu permission khác SPA/Ngành hàng/Test — nút "Trở về" sẽ không làm gì.
+Full-screen image viewer
+Khi click ảnh VP hoặc ảnh sửa lỗi:
+Set(img, itemIMG)   -- hoặc itemIMG2
+Navigate('Hình ảnh', ScreenTransition.Cover)
+Màn hình 'Hình ảnh' nhận biến img để hiển thị full-screen.
+⚠️ Ghi chú
+"Điểm của VP" prefix "−": If(IsBlank(Parent.Default),"","−") & Parent.Default — ý đồ hiển thị điểm như số âm (điểm trừ), nhưng chỉ là format display, không phải giá trị thực trong DB.
+"Trở về" thiếu fallback: Nếu permission không phải "SPA", "Ngành hàng", hoặc "Test", nút không navigate đến đâu cả.
+Phân tích Screen: "VP (Cụm MNC chính) Chỉnh sửa"
+Mục đích
+Edit form cho 1 record lỗi VP. Cho phép SPA chỉnh sửa thông tin lỗi + ảnh VP, và Ngành hàng phản hồi (upload ảnh sửa lỗi + nhập phản hồi).
+Table kết nối
+Table
+Vai trò
+Lỗi trưng bày của VP (Cụm MNC chính)
+DataSource Form1_1 — LookUp(ID = itemId), SubmitForm
+Form1_1 — Fields & RBAC
+DataCard
+Column
+Staff SPA
+Ngành hàng
+Others
+Lỗi trưng bày của VP
+L_x00f4__x0303_...
+Disabled
+Disabled
+Edit
+Hình ảnh của VP
+Hi_x0300_nha_x0309_nhcu_x0309_aV
+Disabled
+Disabled
+Edit
+Điểm của VP
+OData__x0110_...
+Disabled
+Disabled
+Edit
+Ghi chú
+Ghichu_x0301_
+Edit
+Disabled
+Edit
+Hình ảnh sửa lỗi
+Hi_x0300_nha_x0309_nhs_x01b0__x0
+Disabled
+Edit
+Edit
+Phản hồi thông tin
+Pha_x0309_nh_x00f4__x0300_ith_x0
+Disabled
+Edit
+Edit
+Phân quyền theo vai trò:
+SPA/Others: sửa được lỗi, ảnh VP, điểm, ghi chú
+Ngành hàng: chỉ sửa được ảnh sửa lỗi + phản hồi thông tin (role người tiếp nhận & xử lý lỗi)
+Staff SPA: chỉ sửa được ghi chú
+Submit
+SubmitForm(Form1_1) → Navigate('VP (Cụm MNC chính) Chi tiết')
+Trở về           → Navigate('VP (Cụm MNC chính) Chi tiết')
+⚠️ Bug
+Image12_1 (preview ảnh sửa lỗi) có DisplayMode: = — giá trị rỗng, không hợp lệ. Control này sẽ inherit DisplayMode từ parent hoặc default về Edit, có thể gây hành vi không mong muốn (user click vào ảnh nhưng không trigger gì).  
+Phân tích Screen: "Báo cáo POS/VMD"
+Mục đích
+Màn hình hub chọn module báo cáo. Hiển thị danh sách module báo cáo theo quyền của user, click vào từng module để navigate đến màn báo cáo tương ứng.
+Table kết nối
+Table
+Vai trò
+Báo cáo POPVMD
+Config table — danh sách module báo cáo (Name Module, Hình ảnh, các cột Phân quyền)
+Logic filter Gallery theo usernh
+usernh
+Filter điều kiện
+FOODLINE 1
+'Phân quyền 1' = "FOODLINE 1"
+FOODLINE 2
+'Phân quyền 2' = "FOODLINE 2"
+SOFTLINE
+'Phân quyền 3' = "SOFTLINE"
+HARDLINE
+'Phân quyền 4' = "HARDLINE"
+SPA
+'Phân quyền 5' = "SM,SPA"
+SM
+'Phân quyền 5' = "SM,SPA"
+usernh là biến khác với userrolevalue — đây là biến phân quyền theo Ngành hàng cấp cao (FOODLINE/SOFTLINE/HARDLINE/SPA/SM).
+Navigation theo module
+'Name Module' = "Báo cáo kiểm tra POP"   → Navigate('Báo cáo kiểm tra POP')
+'Name Module' = "Báo cáo chấm điểm POP"  → Navigate('Báo cáo chấm điểm POP')
+'Name Module' = "Báo cáo kiểm tra VMD"   → Navigate('Báo cáo kiểm tra VMD')
+Buttons
+Button
+Hành động
+"Trở về"
+Navigate('Công việc hàng ngày')
+Biến phụ thuộc
+Biến
+Mục đích
+usernh
+Phân quyền ngành hàng cấp cao để filter module hiển thị
+userimg
+Avatar header
+⚠️ Ghi chú
+Thiếu fallback: Nếu usernh không khớp với bất kỳ case nào (null, giá trị khác), gallery hiển thị trống — user không thấy module nào.
+Logo không navigate: logo_77.OnSelect = = (rỗng) — khác với các màn hình khác đều có Navigate('Trang Chủ'). Có thể là bỏ sót.
+Phân tích Screen: "Báo cáo kiểm tra POP"
+Mục đích
+Màn hình báo cáo thống kê lỗi kiểm tra POP dưới dạng biểu đồ cột (BarChart), nhóm theo Quầy hàng, lọc theo tháng và ngành hàng.
+Table kết nối
+Table
+Vai trò
+KIỂM TRA TRƯNG BÀY POP
+Nguồn dữ liệu chính cho biểu đồ và Gallery4 ẩn
+Filter Controls
+Control
+Chức năng
+Ghi chú
+Dropdown1
+Lọc theo Tháng (Tháng 01–12)
+Default = tháng hiện tại (Month(Now()))
+Dropdown1_1
+Lọc theo Ngành hàng (Xem tất cả / FOODLINE 1 / FOODLINE 2 / SOFTLINE / HARDLINE)
+Auto-lock nếu usernh không phải SPA/SM — user chỉ thấy ngành của mình
+Phân quyền dropdown ngành hàng:
+SPA / SM: có thể chọn tự do (xem tất cả hoặc từng ngành)
+FOODLINE 1/2 / SOFTLINE / HARDLINE: Disabled, default vào ngành của họ
+Pipeline dữ liệu biểu đồ (ColumnChart2)
+ShowColumns('KIỂM TRA TRƯNG BÀY POP', Quầy hàng, Ref id, Created, Tháng, Ngành hàng)
+  → Filter: Tháng = Dropdown1 [+ Ngành hàng = Dropdown1_1 nếu không "Xem tất cả"]
+  → AddColumns: 'Tên quầy hàng' = Quầy hàng
+  → GroupBy('Tên quầy hàng', 'Nhóm quầy hàng')
+  → AddColumns: 'Số lần lỗi' = CountRows('Nhóm quầy hàng')
+  → AddColumns: Nhãn = "Quầy hàng (Số lần lỗi)"
+Output: X-axis = Nhãn (Tên quầy + count), Y-axis = Số lần lỗi
+Gallery4 ẩn (Visible = false)
+Items từ KIỂM TRA TRƯNG BÀY POP, hiển thị các fields: Created, Tháng, Ngành hàng, Quầy hàng, Lỗi trưng bày của POP, Ghi chú, Phản hồi thông tin. Gallery này không có OnSelect và không điều hướng — có thể là artifact từ thiết kế cũ hoặc dùng để ép Power Apps load schema.
+⚠️ Ghi chú kỹ thuật
+9 Series trùng nhau: ColumnChart2 khai báo Series1–Series9 đều trỏ về Số lần lỗi. Thực tế chỉ render 1 series — 8 series còn lại thừa, nhưng không gây lỗi.
+Tháng filter dùng text: So sánh Dropdown1.Selected.Value = Tháng (text "Tháng 01"…) thay vì date — phụ thuộc vào field Tháng trong bảng phải là text đúng format, nếu không sẽ không filter được.
+Biến phụ thuộc
+Biến
+Mục đích
+usernh
+Lock Dropdown1_1 về ngành của user
+userimg
+Avatar header
+Thought process
+Thought process
+Phân tích Screen: "Báo cáo kiểm tra VMD"
+1. Mục đích
+Dashboard báo cáo kiểm tra VMD (Visual Merchandising Display) — hiển thị biểu đồ lỗi theo khu vực trưng bày và xuất dữ liệu ra Excel.
+2. Data Sources (SharePoint Lists)
+Gallery ẩn
+SharePoint List
+Mục đích
+VMD
+KIỂM TRA VMD
+Bảng chính – tổng hợp toàn bộ lần kiểm tra
+VP
+Kiểm tra VP
+Chi tiết lỗi khu vực VP
+Bàn
+Kiểm tra Bàn
+Chi tiết lỗi khu vực Bàn
+Cột
+Kiểm tra Cột
+Chi tiết lỗi khu vực Cột
+Gondola
+Kiểm tra Gondola
+Chi tiết lỗi khu vực Gondola
+Sào
+Kiểm tra Sào
+Chi tiết lỗi khu vực Sào
+Vách
+Kiểm tra Vách
+Chi tiết lỗi khu vực Vách
+Columns chung của các bảng khu vực: ID, Kiểm tra [KhuVực], Ref ID (FK → KIỂM TRA VMD), Quầy hàng, Ngành hàng, Ghi chú, Phản hồi thông tin, Tháng, Created
+Columns riêng của KIỂM TRA VMD: thêm Người kiểm tra, Khu vực kiểm tra VP/Bàn/Cột/Gondola/Sào/Vách
+3. Controls & Logic nghiệp vụ
+Bộ lọc
+Dropdown1_6 — Lọc tháng (Tháng 01–12), mặc định = tháng hiện tại
+Dropdown1_7 — Lọc ngành hàng: Xem tất cả / SOFTLINE / HARDLINE
+Mặc định theo role: SPA/SM → "Xem tất cả"; SOFTLINE → "SOFTLINE"; HARDLINE → "HARDLINE"
+Disabled với: FOODLINE 1, FOODLINE 2, SOFTLINE, HARDLINE (không cho đổi)
+Biểu đồ
+Pattern chung cho tất cả 7 charts:
+Filter(ShowColumns([List], ...), Tháng = Dropdown1_6)
+→ AddColumns(Tên quầy hàng)
+→ GroupBy(Tên quầy hàng)
+→ AddColumns(Số lần lỗi = CountRows(nhóm))
+→ AddColumns(Nhãn = Concatenate(Tên, " (", Số lần lỗi, ")"))
+Nếu Dropdown1_7 ≠ "Xem tất cả" → thêm điều kiện filter Ngành hàng = Dropdown1_7
+Control
+Loại
+Data Source
+ColumnChart1
+BarChart
+KIỂM TRA VMD — tần suất kiểm tra theo quầy
+PieChart1_4 + Legend1_4
+PieChart
+Kiểm tra VP
+PieChart1_5 + Legend1_5
+PieChart
+Kiểm tra Bàn
+PieChart1_6 + Legend1_6
+PieChart
+Kiểm tra Cột
+PieChart1_7 + Legend1_7
+PieChart
+Kiểm tra Gondola
+PieChart1_8 + Legend1_8
+PieChart
+Kiểm tra Sào
+PieChart1_9 + Legend1_9
+PieChart
+Kiểm tra Vách
+Export Excel (7 nút)
+Logic giống nhau, chỉ khác nguồn:
+Clear(col_GalleryData)
+ForAll(Gallery.AllItems) → Collect(col_GalleryData, {...fields})
+Filter theo tháng (+ ngành hàng nếu có)
+JSON(..., IncludeBinaryData) → gọi Power Automate flow ExporttoExcel
+Launch(varFileLink) — mở file Excel download
+Navigation
+btn_back_90 → Navigate về 'Báo cáo POS/VMD'
+4. Phân quyền theo role
+Điều kiện
+Hành vi
+user = "svd"
+Hiện links trực tiếp đến SharePoint lists; layout cao hơn (Height = 7200 vs 6380)
+usernh = "SPA" / "SM"
+Dropdown1_7 default "Xem tất cả", có thể đổi
+usernh = "SOFTLINE" / "HARDLINE"
+Dropdown1_7 bị disabled, fixed theo ngành
+usernh = "FOODLINE 1/2"
+Dropdown1_7 bị disabled
+5. Dependencies / Flow bên ngoài
+Power Automate: ExporttoExcel — nhận JSON, trả về filelink (URL download Excel)
+Component: Header, Footer (CanvasComponent tái sử dụng)
+Variable: col_GalleryData (collection), filter_gallery, _JSONFile, varFileLink
+User variable: user, usernh, userimg
+Thought process
+Thought process
+Phân tích Screen: "Mượn - Trả vật tư"
+1. Mục đích
+Màn hình quản lý mượn và trả vật tư — hiển thị danh sách phiếu bàn giao theo từng vai trò người dùng, hỗ trợ lọc, sắp xếp, xem chi tiết và tạo mới.
+2. Data Sources
+List
+Vai trò
+Ký nhận bàn giao
+Bảng chính — lưu phiếu mượn/trả
+Nội dung mượn trả
+Lookup list — nguồn dropdown lọc trạng thái
+Columns dùng từ Ký nhận bàn giao: ID, Quầy hàng, Ngành hàng, Trạng thái, Hình ảnh, Ký tên, Created
+3. Logic phân quyền Gallery (Gallery2_1)
+Pattern filter được lặp lại cho ~30 role, chia 2 nhóm:
+Nhóm GL (Group Leader theo quầy) — filter theo Quầy hàng
+userrolevalue
+Quầy hàng
+GL Beverge
+Beverge
+GL D&D
+D&D
+GL Import
+Import
+GL Seasonal
+Seasonal and Material
+GL Confectionery
+Confectionery
+GL HBC
+Non-food and HBC
+GL Produce
+Produce
+GL Fish
+Fish
+GL Meat
+Meat
+GL Delica
+Delica
+GL Sushi
+Sushi
+GL Bakery
+Bakery
+GL Ladies
+Ladies
+GL Men
+Men
+GL Inner
+Inner
+GL Sport
+Sport
+GL SBA
+SBA (Shoes/Bag/ Acc)
+GL Kid SBA
+Kid SBA
+GL Kid Fashion
+Kid Fashion
+GL Kid Baby
+Kid Baby
+GL Kid Toy
+Kid Toy
+GL House2F
+Household 2F
+GL HouseGF
+Household GF
+GL HCoordy
+Home Coordy
+GL HFashion
+Home Fashion
+GL SHA
+SHA
+GL LHA
+LHA
+GL Multi
+Multimedia
+GL Station
+Stationery
+GL MyCloset
+MyCloset
+Nếu ddcontent có giá trị → thêm điều kiện Trạng thái = ddcontent.Selected.Value
+Nhóm Manager — filter theo Ngành hàng + date range
+userrolevalue / permission
+Filter
+Date range
+permission = "SPA" hoặc "Test"
+Xem tất cả
+Không
+foodline1
+Ngành hàng = "FOODLINE 1"
+dpStartDate ↔ dpEndDate
+foodline2
+Ngành hàng = "FOODLINE 2"
+dpStartDate ↔ dpEndDate
+softline
+Ngành hàng = "SOFTLINE"
+dpStartDate ↔ dpEndDate
+hardline
+Ngành hàng = "HARDLINE"
+dpStartDate ↔ dpEndDate
+dpStartDate, dpEndDate là 2 DatePicker được tham chiếu trong filter nhưng không khai báo trong đoạn YAML này — nhiều khả năng nằm trong phần Children chưa được paste.
+4. Controls
+Filter & Sort
+ddcontent — Dropdown lọc theo Trạng thái, Items = Distinct('Nội dung mượn trả', Title)
+icSort_2 — Toggle sortDirection (Ascending ↔ Descending), sortColumn = "sortID" (= ID)
+Buttons
+btn_insert_2 ("Thêm mới"):
+Disabled: permission = "Ngành hàng" hoặc "Test"
+Edit: permission = "SPA"
+OnSelect → Navigate 'Mượn - Trả vật tư thêm mới' + NewForm(frm_signature) + ResetForm(frm_signature)
+btn_back_6 ("Trở về") → Navigate 'Công việc hàng ngày'
+Gallery item OnSelect
+Set(varItem, ThisItem)
+Set(itemIMG, ThisItem.'Hình ảnh')
+Set(itemIMG2, ThisItem.'Ký tên')
+Navigate('Mượn - Trả vật tư chi tiết', ScreenTransition.Cover)
+Profile popup (Group1_11, toggle bởi Boxprofile)
+Hiện: avatar User().Image, email User().Email, tên usern, nút "Đăng xuất" → Navigate Login
+5. Navigation map
+Hành động
+Đến màn hình
+Click item gallery
+Mượn - Trả vật tư chi tiết
+"Thêm mới"
+Mượn - Trả vật tư thêm mới
+"Trở về"
+Công việc hàng ngày
+Logo
+Trang Chủ
+Avatar user
+Hồ sơ cá nhân
+Đăng xuất
+Login
+6. Variables sử dụng
+Variable
+Kiểu
+Mục đích
+userrolevalue
+Text
+Role GL/foodline/softline/hardline
+permission
+Text
+Quyền SPA/Ngành hàng/Test
+sortColumn
+Text
+Cột sort hiện tại
+sortDirection
+Enum
+Ascending/Descending
+Boxprofile
+Boolean
+Hiện/ẩn profile popup
+varItem
+Record
+Item được chọn để xem chi tiết
+itemIMG, itemIMG2
+Attachment
+Hình ảnh + chữ ký của item
+usern, userimg
+Text/Image
+Thông tin user hiện tại
+Phân tích Screen: "Mượn - Trả vật tư thêm mới"
+1. Mục đích
+Form tạo mới phiếu mượn/trả vật tư — nhập thông tin hạng mục, upload ảnh, ký tên điện tử và lưu vào SharePoint.
+2. Data Sources
+List
+Vai trò
+Ký nhận bàn giao
+Bảng đích — form submit vào đây
+THÔNG TIN QUẦY HÀNG
+Lookup — nguồn dropdown Ngành hàng & Quầy hàng
+3. Form frm_signature
+DataSource: 'Ký nhận bàn giao'
+DefaultMode: FormMode.New
+OnSuccess: Back() — tự động quay lại sau khi lưu thành công
+Submit trigger: btn_insert_3 → SubmitForm(frm_signature)
+Các DataCard theo thứ tự (Y = 0→8)
+#
+DataCard
+Field SP
+Control
+Ghi chú
+0
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Dropdown
+Items = Distinct('THÔNG TIN QUẦY HÀNG', 'Ngành hàng')
+1
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Dropdown
+Items = filter theo Ngành hàng đã chọn ở card trên (cascade)
+2
+Tên đơn hàng
+T_x00ea_n_x0111__x01a1_nha_x0300
+TextInput
+Label hiển thị: "Tên hạng mục"
+3
+Số lượng
+S_x00f4__x0301_l_x01b0__x01a1__x
+TextInput
+IsLocked: true
+4
+Hình ảnh
+Hi_x0300_nha_x0309_nh
+AddMedia + Image
+Upload ảnh, Update = Image3.Image
+5
+Ghi chú
+Ghichu_x0301_
+TextInput
+6
+Tên người bàn giao
+T_x00ea_nng_x01b0__x01a1__x0300_
+TextInput
+Default = usern (auto-fill), Disabled — không cho sửa
+7
+Tên người nhận
+T_x00ea_nng_x01b0__x01a1__x0300_0
+TextInput
+User tự nhập
+8
+Ký tên
+Ky_x0301_t_x00ea_n
+PenInput
+Update = inputSignature.Image (chữ ký điện tử)
+Cascade Dropdown logic:
+DataCardValue8.Items = Distinct(
+  Filter('THÔNG TIN QUẦY HÀNG', 'Ngành hàng' = DataCardValue7.Selected.Value),
+  'Quầy hàng'
+)
+→ Chọn Ngành hàng trước, Quầy hàng tự lọc theo.
+Tên người bàn giao bị hardcode DisplayMode.Disabled và Default = usern — tự động điền tên người đang đăng nhập, không cho chỉnh sửa.
+4. Buttons & Navigation
+Control
+Text
+OnSelect
+btn_insert_3
+"Lưu"
+SubmitForm(frm_signature)
+btn_back_7
+"Trở về"
+Navigate 'Mượn - Trả vật tư'
+logo_9
+—
+Navigate 'Trang Chủ'
+Image1_13 (avatar)
+—
+Navigate 'Hồ sơ cá nhân'
+5. Điểm đáng chú ý khi rebuild
+Cascade dropdown Ngành hàng → Quầy hàng phụ thuộc vào list THÔNG TIN QUẦY HÀNG — cần đảm bảo list này có cả 2 cột.
+Chữ ký dùng PenInput control, lưu dưới dạng ảnh vào cột Ký tên (attachment/image).
+Upload ảnh dùng AddMedia control, giá trị đưa vào qua Image3.Image (xem trước).
+Số lượng card có IsLocked: true — trong app cũ field này bị khóa không cho sửa layout trong editor (nhưng vẫn hoạt động bình thường ở runtime).
+frm_signature được NewForm() + ResetForm() ngay khi navigate vào từ màn hình trước — đảm bảo form luôn trống khi mở.
+Thought process
+Thought process
+Phân tích Screen: "Mượn - Trả vật tư chi tiết"
+1. Mục đích
+Màn hình xem chi tiết phiếu mượn/trả vật tư — toàn bộ form ở chế độ View (chỉ đọc), kèm nút Chỉnh sửa, Xóa, Trở về.
+2. Data Source
+Ký nhận bàn giao — load bản ghi cụ thể qua:
+Item = LookUp('Ký nhận bàn giao', ID = varItem.ID)
+varItem được set từ màn hình danh sách khi user click vào 1 item.
+3. Form frm_signature_1 — View mode
+Tất cả TextInput/DatePicker đều có DisplayMode = Parent.DisplayMode.View — không cho chỉnh sửa trực tiếp trên màn hình này. Các DataCard theo thứ tự:
+# (Y)
+DataCard
+Field SP
+Control
+Ghi chú
+0
+Đã tạo
+Created
+Label (view only)
+Ngày tạo phiếu
+1
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+TextInput (View)
+2
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+TextInput (View)
+3
+Hình ảnh
+Hi_x0300_nha_x0309_nh
+Image (580×580)
+Click → Set(img, itemIMG) → Navigate 'Hình ảnh'
+4
+Tên đơn hàng
+T_x00ea_n_x0111__x01a1_nha_x0300
+TextInput (View)
+Label: "Tên hạng mục"
+5
+Số lượng
+S_x00f4__x0301_l_x01b0__x01a1__x
+TextInput (View)
+6
+Ghi chú
+Ghichu_x0301_
+TextInput (View)
+7
+Tên người bàn giao
+T_x00ea_nng_x01b0__x01a1__x0300_
+TextInput (View)
+8
+Tên người nhận
+T_x00ea_nng_x01b0__x01a1__x0300_0
+TextInput (View)
+9
+Ký tên
+Ky_x0301_t_x00ea_n
+Image (580×580)
+Click → Set(img, itemIMG2) → Navigate 'Hình ảnh'
+10
+Hình sau khi trả
+Hi_x0300_nhsaukhitra_x0309_
+Image (640×582)
+Ảnh chụp khi trả lại
+11
+Ngày trả
+Nga_x0300_ytra_x0309_
+DatePicker (View)
+12
+Trạng thái
+OData__x0110_a_x0303_tra_x0309_haych_x
+TextInput (View)
+DataField là "Đã trả hay chưa?"
+13
+Lý do
+Ta_x0323_isaokh_x00f4_ngtra_x030
+TextInput (View)
+DataField là "Tại sao không trả?"
+So với form Thêm mới, màn hình chi tiết có thêm 3 field không có lúc tạo: Hình sau khi trả, Ngày trả, Trạng thái, Lý do — đây là các field được điền khi trả lại vật tư (likely từ màn hình chỉnh sửa).
+4. Buttons & Phân quyền
+Button
+Text
+DisplayMode
+OnSelect
+btn_back_27
+"Chỉnh sửa"
+Disabled: Ngành hàng/Test; Edit: SPA
+Navigate 'Mượn - Trả vật tư chỉnh sửa'
+btn_back_9
+"Xóa"
+Disabled: Ngành hàng/Test; Edit: SPA
+Remove('Ký nhận bàn giao', LookUp(...ID=varItem.ID)) → Navigate list
+btn_back_8
+"Trở về"
+Luôn Edit
+Navigate 'Mượn - Trả vật tư'
+Chỉ role SPA mới có quyền Xóa và Chỉnh sửa. Role Ngành hàng và Test chỉ xem.
+5. Navigation map
+Hành động
+Đến
+Click ảnh Hình ảnh
+'Hình ảnh' (xem ảnh toàn màn hình, pass img = itemIMG)
+Click ảnh Ký tên
+'Hình ảnh' (pass img = itemIMG2)
+"Chỉnh sửa"
+'Mượn - Trả vật tư chỉnh sửa'
+"Xóa"
+Xóa record → 'Mượn - Trả vật tư'
+"Trở về"
+'Mượn - Trả vật tư'
+Logo
+'Trang Chủ'
+Avatar
+'Hồ sơ cá nhân'
+6. Điểm đáng chú ý khi rebuild
+Màn hình 'Hình ảnh' là 1 screen riêng dùng để xem ảnh/chữ ký phóng to — nhận variable img (set trước khi navigate).
+Màn hình 'Mượn - Trả vật tư chỉnh sửa' là màn hình thứ 4 trong luồng này — nơi SPA điền thêm Hình sau khi trả, Ngày trả, Trạng thái, Lý do.
+Form này không có nút Lưu — toàn bộ là View mode, không submit. Việc cập nhật xảy ra ở màn hình chỉnh sửa riêng.
+OnSuccess = Back() trên form nhưng form không bao giờ được submit ở đây → khai báo thừa từ template.
+Thought process
+Thought process
+Phân tích Screen: "Mượn - Trả vật tư chỉnh sửa"
+1. Mục đích
+Màn hình chỉnh sửa phiếu mượn/trả vật tư — form Edit mode, cho phép cập nhật toàn bộ thông tin bao gồm trạng thái trả, ảnh sau khi trả, ngày giờ trả và lý do.
+2. Data Source & Form
+Form: frm_signature_2, DataSource = 'Ký nhận bàn giao'
+Item: LookUp('Ký nhận bàn giao', ID = varItem.ID) — load bản ghi đang chọn
+OnSuccess: Back()
+Submit: btn_insert_23 → SubmitForm(frm_signature_2)
+3. DataCards theo thứ tự (Y = 0→10)
+#
+DataCard
+Field SP
+Control
+Ghi chú
+0
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Dropdown
+Items = Distinct('THÔNG TIN QUẦY HÀNG', 'Ngành hàng')
+1
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Dropdown
+Cascade: filter theo DataCardValue7_1.Selected.Value
+2
+Tên đơn hàng
+T_x00ea_n_x0111__x01a1_nha_x0300
+Dropdown
+Items = Distinct('Thông tin đơn hàng', 'Tên đơn hàng') — khác với thêm mới dùng TextInput
+3
+Số lượng
+S_x00f4__x0301_l_x01b0__x01a1__x
+TextInput (Edit)
+4
+Hình ảnh
+Hi_x0300_nha_x0309_nh
+AddMedia + Image
+Upload ảnh ban đầu
+5
+Ghi chú
+Ghichu_x0301_
+TextInput (Edit)
+6
+Tên người nhận
+T_x00ea_nng_x01b0__x01a1__x0300_0
+TextInput (Edit)
+(Tên người bàn giao bị bỏ khỏi form này)
+7
+Hình sau khi trả
+Hi_x0300_nhsaukhitra_x0309_
+AddMedia + Image
+Upload ảnh trả lại
+8
+Ngày trả
+Nga_x0300_ytra_x0309_
+DateTimePicker
+DatePicker + Dropdown giờ + phút
+9
+Trạng thái
+OData__x0110_a_x0303_tra_x0309_haych_x
+Dropdown
+Options cố định: ["Đang mượn","Đã trả","Hư hỏng","Thiếu"]
+10
+Lý do
+Ta_x0323_isaokh_x00f4_ngtra_x030
+TextInput (Edit)
+Field "Tại sao không trả?"
+4. Điểm khác biệt so với màn hình Thêm mới
+Điểm
+Thêm mới
+Chỉnh sửa
+Form mode
+New
+Edit (Item = LookUp)
+Tên đơn hàng
+TextInput tự nhập
+Dropdown từ 'Thông tin đơn hàng'
+Tên người bàn giao
+Có (auto-fill = usern, Disabled)
+Không có
+Ký tên (PenInput)
+Có
+Không có
+Hình sau khi trả
+Không có
+Có (AddMedia)
+Ngày trả
+Không có
+Có (DateTime với giờ + phút)
+Trạng thái
+Không có
+Có (Dropdown 4 options)
+Lý do
+Không có
+Có (TextInput)
+5. DateTime picker — Ngày trả
+Được build thủ công từ 3 controls:
+Update = If(
+  Not IsBlank(DateValue1.SelectedDate),
+  DateTime(
+    Year(DateValue1.SelectedDate),
+    Month(DateValue1.SelectedDate),
+    Day(DateValue1.SelectedDate),
+    Value(HourValue1.Selected.Value),
+    Value(MinuteValue1.Selected.Value),
+    0
+  )
+)
+→ Kết hợp DatePicker (ngày) + Dropdown giờ (00–23) + Dropdown phút (00–59).
+6. Data Sources bổ sung phát hiện ở màn hình này
+'Thông tin đơn hàng' — list mới, dùng cho dropdown Tên đơn hàng khi chỉnh sửa. Không xuất hiện ở màn hình Thêm mới (ở đó field này là TextInput tự nhập).
+Tổng hợp tất cả Lists đã gặp trong luồng Mượn - Trả:
+List
+Dùng ở
+Ký nhận bàn giao
+Tất cả 4 màn hình (danh sách, chi tiết, thêm, sửa)
+Nội dung mượn trả
+Màn hình danh sách (dropdown lọc Trạng thái)
+THÔNG TIN QUẦY HÀNG
+Thêm mới + Chỉnh sửa (cascade Ngành hàng → Quầy hàng)
+Thông tin đơn hàng
+Chỉnh sửa (dropdown Tên đơn hàng)
+7. Navigation
+Button
+OnSelect
+btn_insert_23 "Lưu"
+SubmitForm(frm_signature_2) → Back()
+btn_back_26 "Trở về"
+Navigate 'Mượn - Trả vật tư chi tiết'
+logo_25
+Navigate 'Trang Chủ'
+Image1_33 (avatar)
+Navigate 'Hồ sơ cá nhân'
+Thought process
+Thought process
+Phân tích Screen: "Quản lý trang trí"
+1. Mục đích
+Màn hình danh sách quản lý trang trí — cấu trúc và logic giống hệt màn hình "Mượn - Trả vật tư", chỉ khác data source và các màn hình navigate đến.
+2. Khác biệt so với "Mượn - Trả vật tư"
+Điểm
+Mượn - Trả vật tư
+Quản lý trang trí
+Data source chính
+'Ký nhận bàn giao'
+'Quản lý trang trí_1'
+Gallery
+Gallery2_1
+Gallery2_5
+Form reset khi thêm
+frm_signature
+frm_signature_3
+Navigate chi tiết
+'Mượn - Trả vật tư chi tiết'
+'Quản lý trang trí chi tiết'
+Navigate thêm mới
+'Mượn - Trả vật tư thêm mới'
+'Quản lý trang trí thêm mới'
+Dropdown lọc
+ddcontent
+ddcontent_1 (Items vẫn từ 'Nội dung mượn trả')
+Lưu ý: ddcontent_1 dùng chung lookup list 'Nội dung mượn trả' — tức là bộ lọc Trạng thái dùng chung danh mục với module Mượn-Trả.
+3. Logic phân quyền Gallery
+Hoàn toàn giống màn hình Mượn-Trả — 30 GL roles filter theo Quầy hàng, manager roles filter theo Ngành hàng + date range. Chỉ thay 'Ký nhận bàn giao' → 'Quản lý trang trí_1'.
+4. Gallery item OnSelect
+powerfx
+Set(varItem, ThisItem)
+Set(itemIMG, ThisItem.'Hình ảnh')
+Set(itemIMG2, ThisItem.'Ký tên')
+Navigate('Quản lý trang trí chi tiết', ScreenTransition.Cover)
+→ 'Quản lý trang trí_1' cũng có column Hình ảnh và Ký tên — cùng cấu trúc với 'Ký nhận bàn giao'.
+5. Navigation map
+Hành động
+Đến
+Click item
+'Quản lý trang trí chi tiết'
+"Thêm mới" (SPA only)
+'Quản lý trang trí thêm mới'
+"Trở về"
+'Công việc hàng ngày'
+Logo
+'Trang Chủ'
+Avatar
+'Hồ sơ cá nhân'
+6. Kết luận kiến trúc
+Ứng dụng này dùng pattern copy-paste cho các module nghiệp vụ tương tự. "Quản lý trang trí" là bản clone của "Mượn - Trả vật tư" với SharePoint list riêng ('Quản lý trang trí_1') và form riêng (frm_signature_3). Khi rebuild nên tách thành component/template tái sử dụng thay vì duplicate code.
+Thought process
+Thought process
+Phân tích Screen: "Quản lý trang trí thêm mới"
+1. Mục đích
+Form tạo mới bản ghi quản lý trang trí — cấu trúc gần giống "Mượn - Trả vật tư thêm mới", với một số khác biệt quan trọng.
+2. Form frm_signature_3
+DataSource: 'Quản lý trang trí_1'
+DefaultMode: FormMode.New
+OnSuccess: Back()
+Submit: btn_insert_78 → SubmitForm(frm_signature_3)
+Lưu ý bug/inconsistency: Tất cả DataCard dùng DataSourceInfo([@'Ký nhận bàn giao'], ...) để lấy AllowedValues và DisplayName — nhưng form lại submit vào 'Quản lý trang trí_1'. Đây là dấu hiệu copy-paste chưa cập nhật đầy đủ.
+3. DataCards theo thứ tự (Y = 0→7)
+#
+DataCard
+Field SP
+Control
+Ghi chú
+0
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Dropdown
+Items = Distinct('THÔNG TIN QUẦY HÀNG', 'Ngành hàng')
+1
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Dropdown
+Cascade filter theo DataCardValue7_2
+2
+Hình ảnh
+Hi_x0300_nha_x0309_nh
+AddMedia + Image
+Upload ảnh
+3
+Tên đơn hàng
+T_x00ea_n_x0111__x01a1_nha_x0300
+Dropdown
+Items cố định: ["Bàn giao ngành hàng","Thi công"] — khác hoàn toàn so với Mượn-Trả
+4
+Ghi chú
+Ghichu_x0301_
+TextInput
+5
+Tên người bàn giao
+T_x00ea_nng_x01b0__x01a1__x0300_
+TextInput
+Default = usern, Disabled
+6
+Tên người nhận
+T_x00ea_nng_x01b0__x01a1__x0300_0
+TextInput
+User nhập
+7
+Ký tên
+Ky_x0301_t_x00ea_n
+PenInput (inputSignature_1)
+Chữ ký điện tử
+4. Khác biệt so với "Mượn - Trả vật tư thêm mới"
+Điểm
+Mượn - Trả thêm mới
+Trang trí thêm mới
+DataSource
+'Ký nhận bàn giao'
+'Quản lý trang trí_1'
+Tên đơn hàng control
+TextInput tự nhập
+Dropdown cố định 2 options
+Tên đơn hàng options
+Tự do
+"Bàn giao ngành hàng" / "Thi công"
+Số lượng
+Có (TextInput)
+Không có
+Thứ tự Hình ảnh
+Y=4 (sau Tên đơn hàng)
+Y=2 (trước Tên đơn hàng)
+5. Tổng hợp cấu trúc SharePoint List 'Quản lý trang trí_1'
+Từ các DataCards suy ra list này có columns:
+Column
+Encoded field
+Kiểu
+Ngành hàng
+Nga_x0300_nhha_x0300_ng
+Choice/Text
+Quầy hàng
+Qu_x00e2__x0300_yha_x0300_ng
+Choice/Text
+Hình ảnh
+Hi_x0300_nha_x0309_nh
+Image/Attachment
+Tên đơn hàng
+T_x00ea_n_x0111__x01a1_nha_x0300
+Choice (2 options)
+Ghi chú
+Ghichu_x0301_
+Text
+Tên người bàn giao
+T_x00ea_nng_x01b0__x01a1__x0300_
+Text
+Tên người nhận
+T_x00ea_nng_x01b0__x01a1__x0300_0
+Text
+Ký tên
+Ky_x0301_t_x00ea_n
+Image/Attachment
+Trạng thái
+(từ màn hình danh sách)
+Choice/Text
+6. Navigation
+Button
+OnSelect
+btn_insert_78 "Lưu"
+SubmitForm(frm_signature_3) → Back()
+btn_back_75 "Trở về"
+Navigate 'Quản lý trang trí'
+logo_68
+Navigate 'Trang Chủ'
+Image1_16 (avatar)
+Navigate 'Hồ sơ cá nhân'
+Thought process
+Thought process
+Phân tích Screen: "Quản lý trang trí chi tiết"
+Chức năng tổng quan
+Screen xem chi tiết (view-only) một bản ghi từ bảng Quản lý trang trí_1. Không có chức năng chỉnh sửa trực tiếp trên screen này.
+Data Sources liên kết
+Table
+Vai trò
+Quản lý trang trí_1
+Primary – DataSource của Form, lookup theo varItem.ID, xóa record
+Ký nhận bàn giao
+Metadata only – dùng DataSourceInfo(...) để lấy DisplayName, MaxLength cho các field (không đọc data thực)
+⚠️ Đây là dấu hiệu bug tiềm ẩn: Form bind vào Quản lý trang trí_1 nhưng hầu hết DataCard lại gọi DataSourceInfo([@'Ký nhận bàn giao'], ...). Nếu 2 bảng có schema khác nhau thì DisplayName và MaxLength sẽ sai.
+Variables sử dụng
+Variable
+Kiểu
+Mô tả
+varItem
+Record
+Item được chọn từ screen danh sách, dùng để LookUp
+permission
+Text
+Phân quyền: "Ngành hàng", "Test", "SPA"
+Boxprofile
+Boolean
+Toggle hiển thị popup profile
+img
+Variable
+Truyền ảnh sang screen 'Hình ảnh'
+usern
+Text
+Tên người dùng hiện tại
+userimg
+Image
+Avatar người dùng
+Các fields hiển thị trong Form (tất cả View mode)
+DataCard
+Field (decoded)
+Loại control
+Ghi chú
+Đã tạo
+Created
+Label
+Read-only
+Ngành hàng
+Ngành hàng
+TextInput.View
+Quầy hàng
+Quầy hàng
+TextInput.View
+Hình ảnh
+Hình ảnh
+Image
+Click → Set(img, itemIMG) → Navigate 'Hình ảnh'
+Tên đơn hàng
+Tên đơn hàng
+TextInput.View
+Label hiển thị là "Tên hạng mục" (hardcode, khác DisplayName)
+Ghi chú
+Ghi chú
+TextInput.View
+Tên người bàn giao
+Tên người bàn giao
+TextInput.View
+Tên người nhận
+Tên người nhận
+TextInput.View
+Ký tên
+Ký tên
+Image
+Click → Set(img, itemIMG2) → Navigate 'Hình ảnh'
+Hình trưng bày
+Hình trưng bày
+Image
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Trạng thái
+Trạng thái
+TextInput.View
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Lý do
+Lý do
+TextInput.View
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Logic phân quyền (Permission)
+permission = "Ngành hàng" OR "Test"  →  btn Chỉnh sửa & Xóa = Disabled
+permission = "SPA"                    →  btn Chỉnh sửa & Xóa = Edit
+Navigation flows
+Button
+Điều kiện
+Action
+Trở về
+Always
+Navigate → 'Quản lý trang trí'
+Chỉnh sửa
+SPA only
+Navigate → 'Quản lý trang trí chỉnh sửa'
+Xóa
+SPA only
+Remove('Quản lý trang trí_1', LookUp(...ID=varItem.ID)) → Navigate back
+Logo
+Always
+Navigate → 'Trang Chủ'
+Avatar
+Always
+Navigate → 'Hồ sơ cá nhân'
+Đăng xuất
+Always
+Navigate → Login
+Các màn hình liên kết
+'Quản lý trang trí'  (list)
+       ↓ varItem
+'Quản lý trang trí chi tiết'  (screen này)
+       ↓ navigate
+'Quản lý trang trí chỉnh sửa'  (edit screen)
+'Hình ảnh'  (fullscreen image viewer, nhận biến img)
+Phân tích Screen: "Quản lý trang trí chi tiết"
+Chức năng tổng quan
+Screen xem chi tiết (view-only) một bản ghi từ bảng Quản lý trang trí_1. Không có chức năng chỉnh sửa trực tiếp trên screen này.
+Data Sources liên kết
+Table
+Vai trò
+Quản lý trang trí_1
+Primary – DataSource của Form, lookup theo varItem.ID, xóa record
+Ký nhận bàn giao
+Metadata only – dùng DataSourceInfo(...) để lấy DisplayName, MaxLength cho các field (không đọc data thực)
+⚠️ Đây là dấu hiệu bug tiềm ẩn: Form bind vào Quản lý trang trí_1 nhưng hầu hết DataCard lại gọi DataSourceInfo([@'Ký nhận bàn giao'], ...). Nếu 2 bảng có schema khác nhau thì DisplayName và MaxLength sẽ sai.
+Variables sử dụng
+Variable
+Kiểu
+Mô tả
+varItem
+Record
+Item được chọn từ screen danh sách, dùng để LookUp
+permission
+Text
+Phân quyền: "Ngành hàng", "Test", "SPA"
+Boxprofile
+Boolean
+Toggle hiển thị popup profile
+img
+Variable
+Truyền ảnh sang screen 'Hình ảnh'
+usern
+Text
+Tên người dùng hiện tại
+userimg
+Image
+Avatar người dùng
+Các fields hiển thị trong Form (tất cả View mode)
+DataCard
+Field (decoded)
+Loại control
+Ghi chú
+Đã tạo
+Created
+Label
+Read-only
+Ngành hàng
+Ngành hàng
+TextInput.View
+Quầy hàng
+Quầy hàng
+TextInput.View
+Hình ảnh
+Hình ảnh
+Image
+Click → Set(img, itemIMG) → Navigate 'Hình ảnh'
+Tên đơn hàng
+Tên đơn hàng
+TextInput.View
+Label hiển thị là "Tên hạng mục" (hardcode, khác DisplayName)
+Ghi chú
+Ghi chú
+TextInput.View
+Tên người bàn giao
+Tên người bàn giao
+TextInput.View
+Tên người nhận
+Tên người nhận
+TextInput.View
+Ký tên
+Ký tên
+Image
+Click → Set(img, itemIMG2) → Navigate 'Hình ảnh'
+Hình trưng bày
+Hình trưng bày
+Image
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Trạng thái
+Trạng thái
+TextInput.View
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Lý do
+Lý do
+TextInput.View
+DataSourceInfo từ Quản lý trang trí_1 ✓
+Logic phân quyền (Permission)
+permission = "Ngành hàng" OR "Test"  →  btn Chỉnh sửa & Xóa = Disabled
+permission = "SPA"                    →  btn Chỉnh sửa & Xóa = Edit
+Navigation flows
+Button
+Điều kiện
+Action
+Trở về
+Always
+Navigate → 'Quản lý trang trí'
+Chỉnh sửa
+SPA only
+Navigate → 'Quản lý trang trí chỉnh sửa'
+Xóa
+SPA only
+Remove('Quản lý trang trí_1', LookUp(...ID=varItem.ID)) → Navigate back
+Logo
+Always
+Navigate → 'Trang Chủ'
+Avatar
+Always
+Navigate → 'Hồ sơ cá nhân'
+Đăng xuất
+Always
+Navigate → Login
+Các màn hình liên kết
+'Quản lý trang trí'  (list)
+       ↓ varItem
+'Quản lý trang trí chi tiết'  (screen này)
+       ↓ navigate
+'Quản lý trang trí chỉnh sửa'  (edit screen)
+'Hình ảnh'  (fullscreen image viewer, nhận biến img)

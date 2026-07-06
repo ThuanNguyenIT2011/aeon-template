@@ -1,0 +1,367 @@
+TÀI LIỆU YÊU CẦU NGHIỆP VỤ
+BUSINESS REQUIREMENT DOCUMENT (BRD)
+Dự án: Rebuild ứng dụng Chấm điểm / Kiểm tra Trưng bày POP & VMD
+Nền tảng: Power Apps Canvas + SharePoint Online
+Khách hàng: AEON Việt Nam
+Thông tin
+Nội dung
+Phiên bản
+1.0
+Ngày soạn thảo
+1/7/2026
+Người soạn thảo
+Nguyễn Văn Thuận
+Trạng thái
+Dự thảo — chờ khách hàng xác nhận các mục ở Chương 10
+Nguồn phân tích
+Phân tích màn hình Login2.docx (khảo sát app cũ Power Apps Canvas)
+Tài liệu liên quan
+AEON_POP_VMD_Database_Schema.xlsx (thiết kế database chi tiết)
+Mục lục
+Mục lục1
+1. Giới thiệu1
+1.1 Bối cảnh dự án1
+1.2 Mục tiêu dự án1
+1.3 Phạm vi tài liệu1
+2. Phạm vi dự án1
+2.1 Trong phạm vi1
+2.2 Ngoài phạm vi1
+3. Đối tượng liên quan (Stakeholders)1
+4. Hiện trạng hệ thống (As-Is)1
+4.1 Kiến trúc hiện tại1
+4.2 Tổng quan các màn hình đã khảo sát1
+4.3 Vấn đề & rủi ro kỹ thuật hiện tại1
+5. Yêu cầu nghiệp vụ (Business Requirements)1
+5.1 Đăng nhập & Quản lý người dùng1
+5.2 Trang chủ & Điều hướng1
+5.3 Công việc hàng ngày1
+5.4 Chấm điểm & Kiểm tra trưng bày POP/POS1
+5.5 Kiểm tra & Chấm điểm VMD1
+5.6 Mượn - Trả vật tư1
+5.7 Quản lý trang trí1
+5.8 Báo cáo POS/VMD1
+6. Tổng hợp yêu cầu cải tiến khi rebuild1
+6.1 Chuẩn hóa cơ sở dữ liệu1
+6.2 Tự động hóa logic nghiệp vụ1
+6.3 Bảo mật & toàn vẹn dữ liệu1
+6.4 Khả năng quản trị & mở rộng1
+7. Giả định & Ràng buộc1
+7.1 Giả định1
+7.2 Ràng buộc1
+8. Tiêu chí thành công1
+9. Rủi ro & Giải pháp giảm thiểu1
+10. Vấn đề cần xác nhận thêm1
+Phụ lục A: Tổng hợp bảng dữ liệu theo module1
+Phụ lục B: Bảng thuật ngữ1
+1. Giới thiệu
+1.1 Bối cảnh dự án
+AEON hiện đang vận hành một ứng dụng nội bộ xây dựng trên nền tảng Power Apps Canvas, sử dụng SharePoint Online làm nơi lưu trữ dữ liệu, phục vụ công tác chấm điểm và kiểm tra trưng bày POP/POS và VMD (Visual Merchandising Display) tại các quầy hàng. Ứng dụng đã được sử dụng qua nhiều năm và được nhiều nhân sự bổ sung tính năng theo từng giai đoạn, dẫn đến một số vấn đề về cấu trúc dữ liệu và logic xử lý (chi tiết tại Chương 4).
+Nhằm chuẩn bị cho việc xây dựng lại (rebuild) ứng dụng với nền tảng dữ liệu chuẩn hóa, dễ bảo trì và mở rộng, đội ngũ dự án đã tiến hành khảo sát toàn bộ các màn hình (screens) của ứng dụng hiện tại, phân tích logic nghiệp vụ, luồng điều hướng và cấu trúc dữ liệu SharePoint tương ứng. Kết quả khảo sát là cơ sở để xây dựng tài liệu này.
+1.2 Mục tiêu dự án
+Xây dựng lại ứng dụng chấm điểm/kiểm tra trưng bày POP và VMD trên nền tảng Power Apps Canvas + SharePoint Online, giữ nguyên toàn bộ nghiệp vụ đang vận hành.
+Chuẩn hóa cấu trúc cơ sở dữ liệu: loại bỏ các bảng trùng lặp cấu trúc, chuẩn hóa các cột phân quyền, bổ sung các trường dữ liệu còn thiếu để tự động hóa logic nghiệp vụ.
+Khắc phục các lỗi (bug) và điểm yếu kỹ thuật đã phát hiện trong quá trình khảo sát (xem Chương 4.3), đặc biệt là các rủi ro về toàn vẹn dữ liệu (cascade delete) và bảo mật (xác thực người dùng).
+Nâng cao khả năng quản trị: cho phép người quản lý nghiệp vụ tự cập nhật danh mục (vai trò, quầy hàng, loại lỗi, email thông báo...) mà không cần lập trình viên can thiệp vào code.
+1.3 Phạm vi tài liệu
+Tài liệu này trình bày các yêu cầu nghiệp vụ (business requirements) ở mức tổng quan cho toàn bộ 8 module nghiệp vụ của ứng dụng, làm cơ sở để xây dựng Tài liệu Đặc tả Yêu cầu Phần mềm (SRS) chi tiết ở giai đoạn tiếp theo. Thiết kế cơ sở dữ liệu chi tiết (danh sách bảng, field, kiểu dữ liệu, quan hệ) được trình bày trong tài liệu đính kèm “AEON_POP_VMD_Database_Schema.xlsx”.
+2. Phạm vi dự án
+2.1 Trong phạm vi
+Phạm vi dự án bao gồm việc giữ nguyên toàn bộ chức năng nghiệp vụ hiện có và áp dụng các cải tiến kỹ thuật/nghiệp vụ được đề xuất trong quá trình khảo sát (xem Chương 6). Các module trong phạm vi:
+Module
+Mô tả
+Hệ thống / Dùng chung
+Đăng nhập, phân quyền, danh mục vai trò & quầy hàng, cấu hình menu/module.
+Trang chủ
+Điều hướng chính, hồ sơ cá nhân.
+Công việc hàng ngày
+Danh sách các module nghiệp vụ theo phân quyền.
+Chấm điểm & Kiểm tra POP/POS
+Chấm điểm trưng bày, ghi nhận lỗi, thông báo, phản hồi xử lý.
+Kiểm tra & Chấm điểm VMD
+Kiểm tra/chấm điểm 6 khu vực trưng bày, ghi nhận lỗi, phản hồi, thông báo.
+Mượn - Trả vật tư
+Quản lý phiếu mượn/trả vật tư trưng bày, ký nhận điện tử.
+Quản lý trang trí
+Quản lý phiếu bàn giao công tác trang trí quầy hàng.
+Báo cáo POS/VMD
+Thống kê, biểu đồ, xuất Excel báo cáo lỗi trưng bày.
+2.2 Ngoài phạm vi
+Di chuyển (migrate) dữ liệu lịch sử từ ứng dụng cũ sang cấu trúc dữ liệu mới — sẽ được lập kế hoạch riêng nếu khách hàng yêu cầu.
+Tích hợp với các hệ thống ERP/ POS khác của AEON ngoài phạm vi các màn hình đã khảo sát.
+Thiết kế lại giao diện (UI/UX) — tài liệu này tập trung vào yêu cầu nghiệp vụ và dữ liệu, không mô tả chi tiết giao diện.
+Hạ tầng và cấp phát tài khoản Azure AD / Microsoft Entra ID — thuộc trách nhiệm của bộ phận IT hạ tầng AEON, dự án chỉ tích hợp xác thực.
+3. Đối tượng liên quan (Stakeholders)
+Đối tượng
+Vai trò
+Trách nhiệm liên quan
+Ban quản lý cửa hàng / Ngành hàng (SM, SPA)
+Chủ đầu tư nghiệp vụ
+Phê duyệt yêu cầu nghiệp vụ, xác nhận quy trình chấm điểm/kiểm tra và KPI trưng bày.
+Nhân viên/Giám sát viên SPA (Staff SPA, GL SPA)
+Người dùng chính
+Thực hiện chấm điểm, kiểm tra trưng bày POP/VMD hàng ngày.
+Quản lý ngành hàng (GL các quầy hàng)
+Người dùng
+Nhận thông báo lỗi, phản hồi và xử lý lỗi trưng bày tại quầy.
+Bộ phận IT AEON
+Đơn vị hỗ trợ hạ tầng
+Quản trị SharePoint Online, Azure AD, cấp quyền truy cập.
+Đội ngũ phát triển (Dev team)
+Đơn vị triển khai
+Thiết kế, xây dựng, kiểm thử ứng dụng và cơ sở dữ liệu mới.
+4. Hiện trạng hệ thống (As-Is)
+4.1 Kiến trúc hiện tại
+Ứng dụng hiện tại là một Power Apps Canvas App, dữ liệu lưu trữ hoàn toàn trên SharePoint Online dưới dạng nhiều List độc lập (khoảng 34 List được phát hiện qua khảo sát). Không có lớp trung gian API hay Dataverse; toàn bộ logic nghiệp vụ được viết trực tiếp bằng Power Fx trong các màn hình (screens).
+4.2 Tổng quan các màn hình đã khảo sát
+Quá trình khảo sát đã phân tích 16 nhóm màn hình chính (và các màn hình con phát sinh trong quá trình phân tích), bao gồm: Đăng nhập, Trang chủ, Công việc hàng ngày, Chấm điểm POP (4 màn), Lỗi POP (3 màn), Kiểm tra VMD (3 màn), Chấm điểm VMD (3 màn), cùng các màn hình con theo 6 khu vực trưng bày, Mượn-Trả vật tư (4 màn), Quản lý trang trí (4 màn), và Báo cáo POS/VMD (4 màn báo cáo).
+4.3 Vấn đề & rủi ro kỹ thuật hiện tại
+Các vấn đề sau được ghi nhận trong quá trình khảo sát và là cơ sở cho các yêu cầu cải tiến ở Chương 6:
+Trùng lặp cấu trúc dữ liệu: 6 khu vực trưng bày VMD (VP, Bàn, Cột, Gondola, Sào, Vách) mỗi khu vực có 1 bảng SharePoint riêng cho kiểm tra và 1 bảng riêng cho chấm điểm (tổng 12 bảng trùng cấu trúc), gây khó bảo trì.
+Logic phân nhánh (If-chain) lặp lại hàng trăm dòng: mapping Vai trò → Quầy hàng (35 nhánh ở POP, 18-19 nhánh ở VMD), mapping Quầy hàng → Email thông báo (30 nhánh ở POP, 17 nhánh ở VMD), thay vì dùng bảng tra cứu (lookup table).
+Lỗi cascade delete nghiêm trọng: khi xóa một phiên chấm điểm/kiểm tra, chỉ 1 bản ghi lỗi con đầu tiên bị xóa, các bản ghi còn lại bị mồ côi (orphaned records) trong SharePoint.
+Bảo mật xác thực yếu: bảng USER lưu mật khẩu ở dạng văn bản thuần (plain text), không mã hóa.
+Phân quyền module lưu ở 5 cột riêng biệt (Phân quyền 1-5) trong bảng cấu hình WORK, giới hạn số nhóm quyền và có lỗi chính tả tên cột.
+Một số điểm phạt được tính toán ở phía client (Power Fx) nhưng không được lưu vào cơ sở dữ liệu, gây khó khăn khi truy vết/báo cáo.
+Một số bug nhỏ khác: đặt tên biến ngược (StartDate/EndDate), dùng sai toán tử nối lệnh (& thay vì ;), tham chiếu nhầm bảng cấu hình (DataSourceInfo trỏ sai bảng), thiếu fallback khi phân quyền không khớp nhánh nào.
+Chi tiết đầy đủ từng vấn đề được ghi nhận trong tài liệu khảo sát gốc và được ánh xạ trực tiếp sang các trường/ghi chú trong tài liệu thiết kế database đính kèm.
+5. Yêu cầu nghiệp vụ (Business Requirements)
+Chú thích: cột “Loại” đánh dấu Hiện có (chức năng đã có ở app cũ, cần giữ nguyên khi rebuild) hoặc Cải tiến (yêu cầu mới/thay đổi được đề xuất theo phạm vi đã thống nhất ở Chương 2).
+5.1 Đăng nhập & Quản lý người dùng
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-SYS-01
+Người dùng đăng nhập bằng tài khoản được cấp để truy cập ứng dụng.
+Hiện có
+BR-SYS-02
+Xác thực người dùng chuyển sang Azure AD / Microsoft Entra ID thay vì lưu mật khẩu dạng văn bản trong SharePoint.
+Cải tiến
+BR-SYS-03
+Sau đăng nhập, hệ thống xác định vai trò, quyền hạn và ngành hàng phụ trách để hiển thị đúng chức năng và dữ liệu được phép truy cập.
+Hiện có
+BR-SYS-04
+Quản trị viên quản lý danh mục vai trò, quyền hạn và mapping quầy hàng qua bảng cấu hình, không cần sửa code khi có nhân sự/quầy hàng mới.
+Cải tiến
+5.2 Trang chủ & Điều hướng
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-HOME-01
+Màn hình chính hiển thị menu truy cập nhanh (Công việc hàng ngày, Tham khảo, Nguyên tắc trưng bày, Hồ sơ cá nhân) theo cấu hình danh mục.
+Hiện có
+5.3 Công việc hàng ngày
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-WORK-01
+Hiển thị danh sách module nghiệp vụ theo đúng quyền của nhóm ngành hàng người dùng.
+Hiện có
+BR-WORK-02
+Phân quyền hiển thị module qua bảng cấu hình nhiều-nhiều, không giới hạn số nhóm quyền cố định như trước.
+Cải tiến
+5.4 Chấm điểm & Kiểm tra trưng bày POP/POS
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-POP-01
+Tạo phiên chấm điểm trưng bày POP/POS cho một quầy hàng, ghi nhận kết quả Đạt/Không đạt.
+Hiện có
+BR-POP-02
+Khi phát hiện lỗi: ghi nhận loại lỗi, chụp ảnh hiện trạng, ghi chú.
+Hiện có
+BR-POP-03
+Điểm phạt tự động tính theo danh mục loại lỗi, không nhập/hardcode thủ công.
+Cải tiến
+BR-POP-04
+Tự động gửi email thông báo cho người phụ trách quầy hàng khi phát sinh lỗi mới.
+Hiện có
+BR-POP-05
+Email thông báo được tra cứu tự động từ danh mục quầy hàng, không hardcode theo từng quầy.
+Cải tiến
+BR-POP-06
+Người phụ trách ngành hàng (GL) xem chi tiết lỗi, cập nhật ảnh sau khi sửa lỗi và nội dung phản hồi.
+Hiện có
+BR-POP-07
+Khi xóa phiên chấm điểm, toàn bộ lỗi liên quan phải được xóa theo (cascade xóa đầy đủ, không mồ côi dữ liệu).
+Cải tiến
+BR-POP-08
+Phân quyền thao tác xem/sửa/xóa khác nhau theo vai trò: SPA, Ngành hàng, Test.
+Hiện có
+5.5 Kiểm tra & Chấm điểm VMD
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-VMD-01
+Áp dụng cho ngành hàng Softline và Hardline (không áp dụng Foodline); có trường hợp đặc biệt DL Kids với danh mục riêng.
+Hiện có
+BR-VMD-02
+Tạo phiên kiểm tra/chấm điểm VMD, đánh giá theo 6 khu vực trưng bày (VP, Bàn, Cột, Gondola, Sào, Vách); số khu vực áp dụng khác nhau theo nhóm quầy hàng.
+Hiện có
+BR-VMD-03
+Với khu vực Không đạt: ghi nhận mô tả lỗi, chụp ảnh, và (chấm điểm) điểm phạt tương ứng.
+Hiện có
+BR-VMD-04
+Cấu trúc dữ liệu 6 khu vực được chuẩn hóa vào 1 bảng chi tiết dùng chung, dễ mở rộng thêm khu vực mới không cần tạo bảng.
+Cải tiến
+BR-VMD-05
+Cơ chế phản hồi hai chiều: người kiểm tra ghi nhận lỗi, người phụ trách quầy hàng phản hồi và upload ảnh xử lý.
+Hiện có
+BR-VMD-06
+Gửi email thông báo tự động cho người phụ trách quầy hàng khi phát sinh lỗi VMD mới, lấy từ danh mục quầy hàng.
+Cải tiến
+BR-VMD-07
+Phân quyền chỉnh sửa field theo vai trò: Staff SPA chỉ xem, GL Ngành hàng chỉ sửa phần phản hồi, vai trò khác sửa toàn bộ.
+Hiện có
+iy5.6 Mượn - Trả vật tư
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-MT-01
+Lập phiếu mượn vật tư trưng bày: hạng mục, số lượng, ảnh, người bàn giao/nhận, chữ ký điện tử.
+Hiện có
+BR-MT-02
+Khi trả vật tư: cập nhật ảnh tình trạng, ngày giờ trả, trạng thái (Đang mượn/Đã trả/Hư hỏng/Thiếu), lý do nếu có.
+Hiện có
+BR-MT-03
+Lọc danh sách phiếu theo trạng thái và khoảng thời gian; phân quyền tạo/sửa theo vai trò.
+Hiện có
+5.7 Quản lý trang trí
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-TT-01
+Quy trình tương tự Mượn-Trả vật tư, áp dụng cho bàn giao/thi công trang trí quầy hàng, có thêm ảnh trưng bày kết quả.
+Hiện có
+BR-TT-02
+Dữ liệu độc lập hoàn toàn với bảng Mượn-Trả vật tư, khắc phục lỗi tham chiếu nhầm cấu hình field giữa 2 bảng.
+Cải tiến
+5.8 Báo cáo POS/VMD
+Mã
+Yêu cầu nghiệp vụ
+Loại
+BR-BC-01
+Xem báo cáo thống kê số lượng lỗi trưng bày theo quầy hàng, theo tháng, dạng biểu đồ.
+Hiện có
+BR-BC-02
+Xuất dữ liệu báo cáo ra file Excel.
+Hiện có
+BR-BC-03
+Danh sách module báo cáo hiển thị theo đúng quyền hạn (nhóm ngành hàng) của người dùng.
+Hiện có
+6. Tổng hợp yêu cầu cải tiến khi rebuild
+Các yêu cầu cải tiến (đánh dấu “Cải tiến” ở Chương 5) được tổng hợp lại theo nhóm chủ đề để tiện theo dõi triển khai:
+6.1 Chuẩn hóa cơ sở dữ liệu
+Gộp 12 bảng khu vực trùng cấu trúc của VMD (6 bảng kiểm tra + 6 bảng chấm điểm theo khu vực) thành 2 bảng chi tiết dùng cột phân loại “Khu vực”.
+Chuẩn hóa các cột phân quyền rời rạc (Phân quyền 1-5) của bảng Công việc hàng ngày và Báo cáo thành bảng liên kết (join table) linh hoạt.
+Bổ sung các trường còn thiếu: Điểm (trong danh mục lỗi POP), Email & Vai trò mặc định (trong danh mục quầy hàng).
+6.2 Tự động hóa logic nghiệp vụ
+Thay thế toàn bộ logic if-chain hardcode (mapping Vai trò→Quầy hàng, Quầy hàng→Email) bằng tra cứu (lookup) trên bảng danh mục.
+Tự động tính điểm phạt theo danh mục lỗi thay vì nhập tay hoặc hardcode trong code màn hình.
+6.3 Bảo mật & toàn vẹn dữ liệu
+Chuyển xác thực người dùng sang Azure AD / Microsoft Entra ID.
+Đảm bảo cascade delete đầy đủ (xóa bản ghi cha phải xóa hết bản ghi con liên quan) cho tất cả các luồng có quan hệ 1-N.
+6.4 Khả năng quản trị & mở rộng
+Cho phép quản trị viên nghiệp vụ tự cập nhật danh mục vai trò, quầy hàng, loại lỗi, trạng thái mà không cần sửa code.
+Thiết kế cấu trúc bảng cho phép mở rộng thêm khu vực trưng bày VMD hoặc module báo cáo mới trong tương lai mà không cần tạo bảng mới.
+7. Giả định & Ràng buộc
+7.1 Giả định
+Toàn bộ nhân sự sử dụng ứng dụng đã có (hoặc sẽ được cấp) tài khoản Microsoft 365 / Azure AD hợp lệ để đăng nhập bằng phương thức xác thực mới.
+Dữ liệu lịch sử của ứng dụng cũ không bắt buộc phải di trú (migrate) sang cấu trúc mới trong phạm vi dự án này, trừ khi có yêu cầu bổ sung.
+Danh sách đầy đủ 37 vai trò, mapping quầy hàng và email thông báo sẽ được khách hàng cung cấp đầy đủ trước khi nhập liệu khởi tạo (xem Chương 10).
+7.2 Ràng buộc
+Nền tảng lưu trữ dữ liệu là SharePoint Online — có giới hạn kỹ thuật về ngưỡng delegation (khoảng 2.000 bản ghi mỗi truy vấn không index); cần thiết kế filter/index phù hợp để tránh ảnh hưởng hiệu năng khi dữ liệu tăng trưởng.
+Việc tích hợp Azure AD / Microsoft Entra ID phụ thuộc vào việc cấp quyền và cấu hình từ bộ phận IT hạ tầng AEON.
+Ứng dụng tiếp tục được xây dựng trên Power Apps Canvas — chịu các giới hạn vốn có của nền tảng này (ví dụ: giới hạn về hiệu năng render gallery lớn, giới hạn định dạng biểu đồ).
+8. Tiêu chí thành công
+100% chức năng nghiệp vụ hiện có (Chương 5, loại “Hiện có”) được rebuild đầy đủ, không giảm tính năng so với ứng dụng cũ.
+Toàn bộ các đoạn logic if-chain lặp lại (300+ dòng mapping Vai trò/Quầy hàng/Email) được thay thế bằng bảng cấu hình, không còn hardcode trong code màn hình.
+Không còn phát sinh dữ liệu mồ côi (orphaned records) khi xóa các bản ghi có quan hệ cha-con.
+Đăng nhập thành công qua Azure AD / Microsoft Entra ID; không còn lưu trữ mật khẩu dạng văn bản thuần trong SharePoint.
+Điểm phạt và email thông báo được tính toán/tra cứu tự động từ danh mục cấu hình.
+Người quản lý nghiệp vụ có thể tự cập nhật danh mục (vai trò, quầy hàng, loại lỗi) thông qua giao diện quản trị hoặc trực tiếp trên SharePoint mà không cần lập trình viên can thiệp.
+Báo cáo POS/VMD hiển thị đúng số liệu và xuất Excel thành công cho tất cả các vai trò được cấp quyền.
+9. Rủi ro & Giải pháp giảm thiểu
+Rủi ro
+Mức độ
+Giải pháp giảm thiểu
+Thiếu thông tin đầy đủ về 37 vai trò và mapping quầy hàng/email (tài liệu khảo sát gốc bị lược bớt một phần).
+Trung bình
+Yêu cầu khách hàng cung cấp danh sách đầy đủ trước khi nhập liệu khởi tạo danh mục (Chương 10, mục 7).
+Bảng “Kiểm tra POP” / “KIỂM TRA TRƯNG BÀY POP” chưa được xác nhận rõ có phải luồng nghiệp vụ riêng — có thể phát sinh yêu cầu bổ sung khi viết SRS.
+Trung bình
+Làm rõ với khách hàng trước khi thiết kế SRS chi tiết cho module POP (Chương 10, mục 1).
+Giới hạn hiệu năng SharePoint Online khi khối lượng dữ liệu giao dịch lớn (delegation limit ~2.000 bản ghi).
+Trung bình
+Thiết kế index, giới hạn khoảng thời gian mặc định khi filter/báo cáo; theo dõi khối lượng thực tế để cân nhắc nâng cấp Dataverse trong tương lai nếu cần.
+Thời gian tích hợp Azure AD / Microsoft Entra ID phụ thuộc tiến độ cấp quyền từ bộ phận IT hạ tầng.
+Thấp - Trung bình
+Lên lịch phối hợp sớm với IT AEON ngay từ đầu dự án để không ảnh hưởng timeline chung.
+10. Vấn đề cần xác nhận thêm
+Các mục dưới đây cần được khách hàng xác nhận trước khi hoàn thiện Tài liệu Đặc tả Yêu cầu Phần mềm (SRS) và bắt đầu triển khai. Hai mục (Xác thực, Nền tảng) đã được xác nhận trong buổi trao đổi yêu cầu — nêu lại tại đây để đảm bảo tính nhất quán.
+#
+Vấn đề / Câu hỏi
+Trạng thái
+1
+Bảng “KIỂM TRA TRƯNG BÀY POP” dùng trong báo cáo có phải cùng dữ liệu với LỖI TRƯNG BÀY POP, hay là một luồng “Kiểm tra POP” riêng chưa được cung cấp đầy đủ màn hình?
+Chưa giải quyết
+2
+Cơ chế xác thực người dùng.
+Đã quyết định: Azure AD / Microsoft Entra ID
+3
+Trường “Tháng” (dạng text) lặp lại ở nhiều bảng — giữ lại để tương thích báo cáo cũ hay bỏ và tính từ Created?
+Chưa giải quyết
+4
+Email Sport dùng chung với Inner, Stationery dùng chung với Multimedia — là chủ ý nghiệp vụ hay lỗi cấu hình cần sửa?
+Chưa giải quyết
+5
+Cơ chế cascade delete: tiếp tục dùng RemoveIf trong Power Apps hay chuyển sang Power Automate Flow để đảm bảo toàn vẹn dữ liệu?
+Chưa giải quyết
+6
+Danh mục trạng thái “Đang mượn/Đã trả/Hư hỏng/Thiếu” của Mượn-Trả có áp dụng đúng cho Quản lý trang trí hay cần danh mục riêng?
+Chưa giải quyết
+7
+Danh sách đầy đủ 37 vai trò và mapping Vai trò → Quầy hàng → Email (tài liệu gốc hiện chỉ có một phần).
+Chưa giải quyết — cần khách hàng cung cấp
+8
+Nền tảng lưu trữ dữ liệu.
+Đã quyết định: giữ SharePoint Online (theo dõi khối lượng dữ liệu để đánh giá lại nếu cần)
+9
+Trường “Điểm” hiển thị dấu trừ ở app cũ chỉ là định dạng hiển thị — có cần lưu giá trị âm thực sự khi rebuild hay vẫn lưu dương và xử lý ở tầng giao diện?
+Chưa giải quyết
+Phụ lục A: Tổng hợp bảng dữ liệu theo module
+Chi tiết đầy đủ field, kiểu dữ liệu và mô tả từng bảng được trình bày trong tài liệu đính kèm “AEON_POP_VMD_Database_Schema.xlsx”.
+Module
+Số bảng
+Danh sách bảng
+Hệ thống / Dùng chung
+9
+NGUOI_DUNG, DANH_MUC_VAI_TRO, THONG_TIN_QUAY_HANG, THONG_TIN_QUAY_HANG_VMD, DANH_MUC_MENU_TRANG_CHU, DANH_MUC_CONG_VIEC, CONG_VIEC_PHAN_QUYEN, DANH_MUC_BAO_CAO, BAO_CAO_PHAN_QUYEN
+POP
+4
+CHAM_DIEM_POP, LOI_TRUNG_BAY_POP, DANH_MUC_LOI_POP, KIEM_TRA_TRUNG_BAY_POP
+VMD
+6
+KIEM_TRA_VMD, KIEM_TRA_VMD_CHI_TIET, DANH_MUC_LOI_KIEM_TRA_VMD, CHAM_DIEM_VMD, CHAM_DIEM_VMD_CHI_TIET, DANH_MUC_LOI_CHAM_DIEM_VMD
+Mượn - Trả vật tư
+3
+PHIEU_MUON_TRA, DANH_MUC_TEN_DON_HANG, DANH_MUC_TRANG_THAI_MUON_TRA
+Quản lý trang trí
+1
+PHIEU_TRANG_TRI
+Phụ lục B: Bảng thuật ngữ
+Thuật ngữ
+Giải thích
+POP/POS
+Point of Purchase / Point of Sale — vật phẩm/khu vực trưng bày quảng cáo, khuyến mãi tại điểm bán.
+VMD
+Visual Merchandising Display — trưng bày hình ảnh sản phẩm theo tiêu chuẩn hình ảnh của AEON.
+GL
+Group Leader — trưởng nhóm/quản lý phụ trách một quầy hàng hoặc ngành hàng.
+SPA
+Bộ phận/nhóm vai trò phụ trách kiểm soát chuẩn trưng bày (Store Presentation/Area).
+SM
+Store Manager — quản lý cửa hàng.
+Cascade delete
+Cơ chế xóa lan truyền: khi xóa 1 bản ghi cha, toàn bộ bản ghi con liên quan phải được xóa theo.
+Delegation (SharePoint)
+Cơ chế Power Apps đẩy việc lọc/xử lý dữ liệu xuống nguồn dữ liệu (SharePoint) thay vì tải hết về client; có giới hạn số bản ghi xử lý được nếu không delegate được.
