@@ -16,6 +16,11 @@ dist/
 *.swo
 *~
 
+# internal docs
+PHAN_QUYEN_3_LOP.html
+PHAN_QUYEN_3_LOP.md
+Phân tích màn hình Login2.docx
+
 # OS files
 .DS_Store
 Thumbs.db
